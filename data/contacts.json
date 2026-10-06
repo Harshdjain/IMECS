@@ -1,0 +1,30 @@
+[
+  {
+    "id": "3",
+    "name": "Local Police Department",
+    "phone": "+919876543212",
+    "relationship": "Emergency Services",
+    "active": false
+  },
+  {
+    "id": "1786980808833",
+    "name": "Harsh Jain",
+    "phone": "+919999999999",
+    "relationship": "Family",
+    "active": true
+  },
+  {
+    "id": "1786980951106",
+    "name": "Harsh D Jain",
+    "phone": "8610728759",
+    "relationship": "Family",
+    "active": true
+  },
+  {
+    "id": "1786981415962",
+    "name": "Harsh D Jain",
+    "phone": "8610728759",
+    "relationship": "Family",
+    "active": true
+  }
+]

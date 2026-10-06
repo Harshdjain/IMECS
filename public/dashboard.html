@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMECS — Caregiver Command Dashboard</title>
+  
+  <!-- Leaflet CSS for Maps -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  
+  <!-- App Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <a href="index.html" style="text-decoration:none; font-size:18px; margin-right:8px;">&larr;</a>
+      <div class="status-dot" id="system-status-dot"></div>
+      <div>
+        <h1>IMECS Command</h1>
+        <p>Caregiver & Responder Interface</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center;">
+      <button class="btn btn-sm" id="med-profile-modal-btn" onclick="openMedicalModal()" style="font-size:11px; padding:3px 8px; margin-right:8px; background:var(--bg-secondary); border-color:var(--border-secondary);">
+        🏥 Medical Profile
+      </button>
+      <button class="btn btn-sm" id="notify-perm-btn" style="font-size:11px; padding:3px 8px; margin-right:12px; background:var(--bg-secondary); border-color:var(--border-secondary);">
+        🔔 Enable Audio & Push Alerts
+      </button>
+      <span class="badge badge-info" id="system-alert-status">NORMAL OPS</span>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Grid -->
+  <main class="dashboard-grid">
+    
+    <!-- Left Panel: Contact Manager -->
+    <section class="panel left-panel">
+      <div class="panel-header">
+        <h2>Emergency Contacts</h2>
+        <span class="badge badge-info" id="contacts-badge">0 Contacts</span>
+      </div>
+      <div class="panel-content">
+        <!-- Add Contact Form -->
+        <form id="contact-form" style="border-bottom: 1px solid var(--border-primary); padding-bottom: 20px; margin-bottom: 10px;">
+          <input type="hidden" id="edit-contact-id">
+          <div class="form-group">
+            <label for="contact-name">Full Name</label>
+            <input type="text" id="contact-name" class="form-control" placeholder="e.g. Daughter, Doctor" required>
+          </div>
+          <div class="form-group">
+            <label for="contact-phone">Mobile Number (with Country Code)</label>
+            <input type="tel" id="contact-phone" class="form-control" placeholder="e.g. +919876543210" required>
+          </div>
+          <div class="form-group">
+            <label for="contact-rel">Relationship</label>
+            <select id="contact-rel" class="form-control">
+              <option value="Family">Family</option>
+              <option value="Doctor">Doctor</option>
+              <option value="Neighbor">Neighbor</option>
+              <option value="Emergency Services">Emergency Services</option>
+            </select>
+          </div>
+          <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+            <input type="checkbox" id="contact-active" checked>
+            <label for="contact-active" style="margin-bottom:0; cursor:pointer;">Active (Send SOS Alerts)</label>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button type="submit" class="btn btn-primary" id="form-submit-btn" style="flex-grow:1;">Save Contact</button>
+            <button type="button" class="btn" id="form-cancel-btn" style="display:none;">Cancel</button>
+          </div>
+        </form>
+
+        <!-- Contacts Cards List Container -->
+        <div class="contacts-list" id="contacts-container">
+          <p style="font-size:12px; color:var(--text-tertiary); text-align:center; padding:20px;">Loading contacts...</p>
+        </div>
+
+        <!-- Firewall / Network Diagnostics Box -->
+        <div class="simulation-panel" style="margin-top: 16px; border: 1px dashed var(--color-warning-border); background: var(--color-warning-bg); color: var(--color-warning); border-radius: var(--border-radius-sm);">
+          <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-warning);">📶 Phone Connection Guide</h4>
+          <p style="font-size: 10px; line-height: 1.4; margin-top: 4px; color: var(--text-secondary);">
+            If your iPhone shows "Server not responding" when scanning the QR code:
+          </p>
+          <ol style="font-size: 10px; margin-left: 14px; margin-top: 4px; color: var(--text-secondary); padding-left: 4px;">
+            <li>Ensure both PC and phone are on the <b>same Wi-Fi</b> network.</li>
+            <li>Run this command in <b>PowerShell (Admin)</b> on your PC to open the firewall port:</li>
+          </ol>
+          <code style="display: block; font-size: 9.5px; padding: 6px; background: var(--bg-primary); border-radius: 4px; word-break: break-all; margin-top: 6px; border: 1px solid var(--border-primary); color: var(--text-primary); user-select: all; font-family: monospace;">New-NetFirewallRule -DisplayName "IMECS SOS Port 3000" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3000</code>
+        </div>
+      </div>
+    </section>
+
+    <!-- Center Panel: Map & Metrics -->
+    <section class="center-panel">
+      <!-- Top Metrics Dashboard -->
+      <div class="metrics-row">
+        <div class="metric-card">
+          <span class="metric-label">Active Nodes</span>
+          <span class="metric-value" id="m-nodes">12</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Relay Hops</span>
+          <span class="metric-value" id="m-hops">2.4</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Coverage</span>
+          <span class="metric-value" id="m-cov">94%</span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">Latency ms</span>
+          <span class="metric-value" id="m-lat">38ms</span>
+        </div>
+      </div>
+
+      <!-- Live Incident & Medical ID Alert Banner -->
+      <div id="live-incident-banner" style="display:none; background:var(--color-danger-bg); border-radius:8px; border:1px solid var(--color-danger-border); padding:10px 14px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">🚨</span>
+            <span style="font-size:13px; font-weight:800; color:var(--color-danger);" id="banner-incident-title">DISTRESS SIGNAL DETECTED</span>
+            <span class="badge badge-danger" id="banner-trigger-mode">SOS</span>
+          </div>
+          <span style="font-size:11px; color:var(--text-secondary);" id="banner-incident-time">Just now</span>
+        </div>
+        <div style="display:flex; gap:12px; margin-top:8px; font-size:11px; flex-wrap:wrap; align-items:center;">
+          <span><b>Patient:</b> <span id="banner-patient-name">--</span></span>
+          <span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-weight:700;" id="banner-blood-group">Blood: --</span>
+          <span><b>Conditions:</b> <span id="banner-conditions">--</span></span>
+          <span><b>Allergies:</b> <span id="banner-allergies" style="color:var(--color-danger); font-weight:700;">--</span></span>
+          <span><b>Live Breadcrumbs:</b> <span id="banner-breadcrumbs-count" style="font-weight:700; color:var(--color-info);">1 Point</span></span>
+        </div>
+      </div>
+
+      <!-- Live GPS Map -->
+      <div class="map-container">
+        <div id="map"></div>
+      </div>
+    </section>
+
+    <!-- Right Panel: Simulation & Logs -->
+    <section class="panel right-panel">
+      <div class="panel-header">
+        <h2>Network & Logs</h2>
+      </div>
+      <div class="panel-content" style="display:flex; flex-direction:column; gap:16px;">
+        
+        <!-- Twilio Gateway Setup Form -->
+        <div class="simulation-panel" style="margin-bottom: 0;">
+          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Twilio SMS Gateway</span>
+            <span class="badge" id="sms-gate-status" style="font-size:9px; padding:2px 6px;">Loading...</span>
+          </h3>
+          <form id="sms-config-form" style="display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
+              <input type="checkbox" id="sms-simulate-toggle" checked>
+              <label for="sms-simulate-toggle" style="font-size:11px; margin-bottom:0; cursor:pointer;">Simulate SMS Alerts</label>
+            </div>
+            <div id="twilio-fields" style="display:none; flex-direction:column; gap:6px;">
+              <input type="text" id="twilio-sid" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Account SID">
+              <input type="password" id="twilio-token" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Auth Token">
+              <input type="text" id="twilio-phone" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Phone Number">
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary" style="font-size:11px; padding:4px 8px;">Save configuration</button>
+          </form>
+        </div>
+
+        <!-- Network Simulation panel -->
+        <div class="simulation-panel" style="margin-bottom: 0;">
+          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px;">IMECS Simulations</h3>
+          <div class="sim-buttons">
+            <button class="btn btn-sm btn-danger" onclick="triggerSimEvent('blackout')">Tower Blackout</button>
+            <button class="btn btn-sm btn-danger" onclick="triggerSimEvent('flood')">Flood Zone</button>
+            <button class="btn btn-sm btn-primary" onclick="triggerSimEvent('drone')">Deploy Drone</button>
+            <button class="btn btn-sm" onclick="triggerSimEvent('restore')">Restore All</button>
+          </div>
+        </div>
+
+        <!-- Event Logs feed -->
+        <div style="flex-grow:1; display:flex; flex-direction:column; min-height:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary);">Real-Time Event Logs</h3>
+            <button class="btn btn-sm" id="clear-logs-btn" style="font-size:10px; padding:2px 6px;">Clear logs</button>
+          </div>
+          <div class="log-feed" id="log-feed-container">
+            <div style="font-size:11px; color:var(--text-tertiary); text-align:center; padding:20px;">No events recorded. Waiting for alerts...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Medical Profile Modal -->
+  <div id="medical-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div style="background:var(--bg-primary); max-width:520px; width:100%; border-radius:12px; border:1px solid var(--border-primary); padding:20px; box-shadow:0 12px 36px rgba(0,0,0,0.3);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border-primary); padding-bottom:8px;">
+        <h3 style="font-size:15px; font-weight:800;">🏥 Registered Patient Medical Emergency Profile</h3>
+        <button onclick="closeMedicalModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-secondary);">&times;</button>
+      </div>
+      <div id="modal-medical-content" style="font-size:12px; line-height:1.6; color:var(--text-primary);">
+        Loading medical profile...
+      </div>
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-sm" onclick="closeMedicalModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS for Maps -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Dashboard JS Logic -->
+  <script src="js/dashboard.js?v=6"></script>
+</body>
+</html>

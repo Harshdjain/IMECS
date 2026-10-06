@@ -1,0 +1,17 @@
+{
+  "name": "sos-emergency-system",
+  "version": "1.0.0",
+  "description": "Intelligent Multi-Layer Emergency Communication System Backend & Client UI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/server.test.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "twilio": "^5.0.4"
+  }
+}

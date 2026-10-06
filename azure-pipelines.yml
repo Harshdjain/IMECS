@@ -1,0 +1,112 @@
+# ===================================================================
+# IMECS - Intelligent Multi-Layer Emergency Communication System
+# Azure DevOps CI/CD Multi-Stage Pipeline
+# ===================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+      - master
+  paths:
+    exclude:
+      - '*.md'
+      - 'docs/**'
+
+pr:
+  branches:
+    include:
+      - main
+      - master
+
+variables:
+  nodeVersion: '20.x'
+  azureSubscription: 'Azure-DevOps-Service-Connection'
+  webAppName: 'imecs-emergency-sos-app'
+  resourceGroupName: 'rg-imecs-emergency-prod'
+  environmentName: 'production'
+
+stages:
+  # -----------------------------------------------------------------
+  # STAGE 1: Build, Lint & Automated Tests
+  # -----------------------------------------------------------------
+  - stage: BuildAndTest
+    displayName: 'Stage 1: Build & Automated Testing'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build and Run Unit Tests'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: $(nodeVersion)
+
+          - script: |
+              echo "Installing NPM project dependencies..."
+              npm ci
+            displayName: 'Install Dependencies (npm ci)'
+
+          - script: |
+              echo "Executing Automated Health & API Test Suite..."
+              npm test
+            displayName: 'Run Unit & API Tests (npm test)'
+            env:
+              NODE_ENV: 'test'
+              PORT: '3099'
+              SIMULATE_SMS: 'true'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish Automated Test Results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'Node'
+              testResultsFiles: '**/test-results.xml'
+              failTaskOnFailedTests: false
+
+          - task: ArchiveFiles@2
+            displayName: 'Archive Application Artifacts'
+            inputs:
+              rootFolderOrFile: '$(System.DefaultWorkingDirectory)'
+              includeRootFolder: false
+              archiveType: 'zip'
+              archiveFile: '$(Build.ArtifactStagingDirectory)/imecs-sos-$(Build.BuildId).zip'
+              replaceExistingArchive: true
+
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Pipeline Drop Artifact'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'drop'
+              publishLocation: 'Container'
+
+  # -----------------------------------------------------------------
+  # STAGE 2: Deployment to Azure App Service / Cloud Hosting
+  # -----------------------------------------------------------------
+  - stage: DeployToAzure
+    displayName: 'Stage 2: Deploy to Azure App Service'
+    dependsOn: BuildAndTest
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - deployment: DeploymentJob
+        displayName: 'Deploy to Azure Web App'
+        environment: '$(environmentName)'
+        pool:
+          vmImage: 'ubuntu-latest'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebApp@1
+                  displayName: 'Deploy Azure Web App: $(webAppName)'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appType: 'webAppLinux'
+                    appName: '$(webAppName)'
+                    package: '$(Pipeline.Workspace)/drop/imecs-sos-$(Build.BuildId).zip'
+                    startUpCommand: 'node server.js'
+                    appSettings: |
+                      -NODE_ENV "production"
+                      -PORT 8080
+                      -SIMULATE_SMS "true"

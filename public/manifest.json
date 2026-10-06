@@ -1,0 +1,27 @@
+{
+  "short_name": "IMECS SOS",
+  "name": "IMECS Emergency SOS",
+  "description": "Intelligent Multi-Layer Emergency Communication System for Elderly Care",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icons/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/trigger.html",
+  "background_color": "#d9383a",
+  "theme_color": "#d9383a",
+  "display": "standalone",
+  "orientation": "portrait"
+}

@@ -1,0 +1,15 @@
+{
+  "fullName": "Test Patient",
+  "age": 75,
+  "bloodGroup": "B+",
+  "chronicConditions": [
+    "Hypertension"
+  ],
+  "allergies": [
+    "None"
+  ],
+  "medications": [
+    "Aspirin"
+  ],
+  "emergencyNotes": "Test notes"
+}

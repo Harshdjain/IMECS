@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>IMECS SOS — Smart Emergency System</title>
+  
+  <!-- PWA Metadata -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#d9383a">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-app: #f4f3ef;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --text-main: #1d1c1a;
+      --text-sub: #6e6d68;
+      --accent-red: #d9383a;
+      --accent-red-light: rgba(217, 56, 58, 0.08);
+      --accent-blue: #1b60b8;
+      --accent-green: #1b8552;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-app: #121211;
+        --bg-card: rgba(26, 26, 25, 0.9);
+        --text-main: #f0ede6;
+        --text-sub: #a3a199;
+        --accent-red: #ff5255;
+        --accent-red-light: rgba(255, 82, 85, 0.14);
+        --border-color: rgba(255, 255, 255, 0.08);
+      }
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-app);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background 0.1s;
+    }
+
+    body.strobe-active {
+      animation: emergency-strobe 0.25s infinite alternate !important;
+    }
+
+    @keyframes emergency-strobe {
+      from { background-color: #ff0000; }
+      to { background-color: #ffffff; }
+    }
+    
+    /* Native App Top Bar */
+    .app-bar {
+      height: 60px;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      z-index: 10;
+    }
+    
+    .app-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .app-logo {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    
+    .app-title-group h1 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+    
+    .sys-badge {
+      font-size: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .sys-badge.ready { background: var(--accent-red-light); color: var(--accent-red); }
+    .sys-badge.sending { background: #fffbe6; color: #d46b08; }
+    .sys-badge.sent { background: #e6f7ff; color: #1890ff; }
+    .sys-badge.offline { background: #fff2e8; color: #fa541c; }
+    
+    /* Main Screen Navigation Views */
+    .screen-views {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      position: relative;
+    }
+    
+    .view-panel {
+      display: none;
+      flex-direction: column;
+      animation: fade-in 0.2s ease-out;
+    }
+    .view-panel.active {
+      display: flex;
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* PWA Card Styling */
+    .app-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+    
+    /* Quick status indicators */
+    .status-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .status-icon {
+      font-size: 18px;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .status-label {
+      font-size: 9px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    
+    .status-value {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* Speed-Dial Emergency Buttons */
+    .speed-dial-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .speed-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-main);
+      text-decoration: none;
+      font-size: 10px;
+      font-weight: 700;
+      gap: 3px;
+      transition: all 0.15s;
+    }
+
+    .speed-btn:active {
+      transform: scale(0.96);
+      background: var(--accent-red-light);
+      border-color: var(--accent-red);
+    }
+
+    .speed-btn.primary {
+      background: var(--accent-red-light);
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    /* SOS Emergency Tap Button */
+    .sos-view-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      margin: 14px 0;
+    }
+    
+    .sos-app-btn {
+      width: 175px;
+      height: 175px;
+      border-radius: 50%;
+      background: var(--accent-red);
+      border: 8px solid var(--bg-card);
+      color: white;
+      font-size: 34px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 16px 36px rgba(217, 56, 58, 0.35);
+      position: relative;
+      transition: transform 0.1s;
+    }
+    
+    .sos-app-btn::after {
+      content: '';
+      position: absolute;
+      top: -8px; left: -8px; right: -8px; bottom: -8px;
+      border-radius: 50%;
+      border: 1px solid var(--accent-red);
+      animation: pulse-ring 2s infinite;
+    }
+    
+    .sos-app-btn:active {
+      transform: scale(0.95);
+    }
+    
+    @keyframes pulse-ring {
+      0% { transform: scale(0.98); opacity: 0.8; }
+      100% { transform: scale(1.35); opacity: 0; }
+    }
+    
+    .sos-label-info {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      text-align: center;
+      margin-top: 12px;
+      max-width: 260px;
+    }
+
+    /* Emergency Actions Row */
+    .emergency-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .action-toggle-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-card);
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-toggle-btn.active {
+      background: var(--accent-red);
+      color: white;
+      border-color: var(--accent-red);
+    }
+
+    /* Decision Score visual list */
+    .decision-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 8px;
+    }
+    
+    .decision-bar-bg {
+      flex: 1;
+      height: 6px;
+      background: rgba(0,0,0,0.05);
+      border-radius: 3px;
+      margin: 0 14px;
+      overflow: hidden;
+    }
+    
+    .decision-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+    
+    /* Bottom Navigation Tab-Bar */
+    .tab-bar {
+      height: 62px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      z-index: 10;
+    }
+    
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-sub);
+      font-size: 9px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      gap: 3px;
+    }
+    
+    .tab-item.active {
+      color: var(--accent-red);
+    }
+    
+    .tab-icon {
+      font-size: 18px;
+    }
+
+    /* Medical Profile Badges & Fields */
+    .medical-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-right: 6px;
+      margin-bottom: 6px;
+    }
+    .badge-blood { background: #fee2e2; color: #991b1b; }
+    .badge-cond { background: #fef3c7; color: #92400e; }
+    .badge-allergy { background: #fce7f3; color: #9d174d; }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+      display: block;
+      text-transform: uppercase;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-app);
+      color: var(--text-main);
+      margin-bottom: 10px;
+    }
+
+    /* Countdown Screen overlay */
+    .app-countdown-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #d9383a;
+      color: #ffffff;
+      z-index: 999999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.3);
+    }
+    .app-countdown-overlay.active {
+      display: flex !important;
+    }
+    
+    .num-big {
+      font-size: 140px;
+      line-height: 1;
+      font-weight: 800;
+      color: #ffffff;
+      text-shadow: 0 4px 30px rgba(0,0,0,0.35);
+      animation: shrink-grow 1s infinite alternate;
+      margin: 20px 0;
+    }
+    
+    @keyframes shrink-grow {
+      from { transform: scale(0.92); }
+      to { transform: scale(1.08); }
+    }
+    
+    .btn-stop {
+      margin-top: 24px;
+      background: white;
+      color: #d9383a;
+      border: none;
+      padding: 14px 40px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 30px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .btn-stop:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+<body>
+  <!-- Top App Title Bar -->
+  <header class="app-bar">
+    <div class="app-title-group">
+      <div class="app-logo">🚨</div>
+      <div>
+        <h1>IMECS SOS</h1>
+        <p style="font-size:9px; color:var(--text-sub); font-weight:700;">Multi-Layer Emergency System</p>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:6px;">
+      <span class="sys-badge ready" id="sys-mode-badge">Ready</span>
+      <span class="sys-badge" id="offline-badge" style="display:none; background:#ff4d4f; color:#fff;">Offline</span>
+    </div>
+  </header>
+
+  <!-- Navigation Views -->
+  <div class="screen-views">
+    
+    <!-- View 1: SOS Trigger View -->
+    <div class="view-panel active" id="view-sos">
+
+      <!-- Speed Dial Bar -->
+      <div class="speed-dial-bar">
+        <a href="tel:112" class="speed-btn primary" onclick="recordSpeedDial('112 Emergency')">
+          <span style="font-size:14px;">📞</span>
+          <span>112 All SOS</span>
+        </a>
+        <a href="tel:108" class="speed-btn" onclick="recordSpeedDial('108 Ambulance')">
+          <span style="font-size:14px;">🚑</span>
+          <span>108 Med</span>
+        </a>
+        <a href="tel:100" class="speed-btn" onclick="recordSpeedDial('100 Police')">
+          <span style="font-size:14px;">👮</span>
+          <span>100 Police</span>
+        </a>
+      </div>
+
+      <!-- Quick Telemetry Row -->
+      <div class="status-row">
+        <div class="app-card status-item" style="margin-bottom:0;">
+          <div class="status-icon">📍</div>
+          <div>
+            <div class="status-label">GPS Coordinate</div>
+            <div class="status-value" id="gps-pos">Locating...</div>
+          </div>
+        </div>
+        <div class="app-card status-item" style="margin-bottom:0;">
+          <div class="status-icon">🔋</div>
+          <div>
+            <div class="status-label">Battery Level</div>
+            <div class="status-value" id="batt-lev">--%</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Big Emergency Trigger Button -->
+      <div class="sos-view-wrapper">
+        <button class="sos-app-btn" id="trigger-sos-btn" onclick="startSOSCountdown('manual')">
+          <span id="sos-btn-main-text">SOS</span>
+          <span style="font-size:9px; font-weight:normal; letter-spacing:1px; margin-top:2px;" id="sos-btn-sub-text">PRESS FOR HELP</span>
+        </button>
+        <p class="sos-label-info">
+          Transmits distress signal, GPS location, and Medical ID to pre-registered caregivers.
+        </p>
+      </div>
+
+      <!-- Emergency Sensor & Bystander Actions -->
+      <div class="emergency-actions-row">
+        <button class="action-toggle-btn" id="btn-toggle-siren" onclick="toggleBystanderSiren()">
+          <span>📢</span>
+          <span id="siren-btn-text">Bystander Siren</span>
+        </button>
+        <button class="action-toggle-btn" id="btn-sim-fall" onclick="simulateFallEvent()">
+          <span>💥</span>
+          <span>Simulate Fall</span>
+        </button>
+      </div>
+
+      <!-- Adaptive Decision Engine Card -->
+      <div class="app-card" style="margin-bottom:0;">
+        <h4 style="font-size:11px; text-transform:uppercase; color:var(--text-sub); margin-bottom:10px; font-weight:700;">Adaptive Pathway Scoring (IMECS)</h4>
+        <div class="decision-row">
+          <span>Cellular Data</span>
+          <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-cell" style="background:#3B8BD4;"></div></div>
+          <span style="font-family:monospace; font-weight:700;" id="val-cell">0</span>
+        </div>
+        <div class="decision-row">
+          <span>SMS Gateway</span>
+          <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-sms" style="background:#9F3FBF;"></div></div>
+          <span style="font-family:monospace; font-weight:700;" id="val-sms">0</span>
+        </div>
+        <div class="decision-row" style="margin-bottom:0;">
+          <span>LoRa Mesh</span>
+          <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-mesh" style="background:#1D9E75;"></div></div>
+          <span style="font-family:monospace; font-weight:700;" id="val-mesh">0</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- View 2: Medical Emergency Profile View -->
+    <div class="view-panel" id="view-medical">
+      <div class="app-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); font-weight:700;">Medical Emergency ID</h4>
+          <span class="medical-badge badge-blood" id="med-blood-badge">Blood: --</span>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <div style="font-size:14px; font-weight:800;" id="med-name-display">Loading profile...</div>
+          <div style="font-size:11px; color:var(--text-sub); margin-top:2px;" id="med-sub-display">Age: --</div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <span class="form-label">Chronic Conditions</span>
+          <div id="med-conditions-badges"></div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <span class="form-label">Allergies</span>
+          <div id="med-allergies-badges"></div>
+        </div>
+
+        <div style="margin-bottom:10px;">
+          <span class="form-label">Active Medications</span>
+          <div id="med-medications-list" style="font-size:11px; color:var(--text-sub);"></div>
+        </div>
+
+        <div style="margin-bottom:12px;">
+          <span class="form-label">Primary Physician & Emergency Notes</span>
+          <p style="font-size:11px; color:var(--text-sub);" id="med-notes-display"></p>
+        </div>
+
+        <button class="action-toggle-btn" style="width:100%;" onclick="toggleMedicalEditor()">
+          <span>✏️ Edit Medical Profile</span>
+        </button>
+
+        <!-- Medical Editor Form (Collapsible) -->
+        <form id="medical-edit-form" style="display:none; margin-top:14px; border-top:1px dashed var(--border-color); padding-top:12px;" onsubmit="saveMedicalProfile(event)">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="input-med-name" class="form-input" required>
+
+          <label class="form-label">Age & Blood Group</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="number" id="input-med-age" class="form-input" placeholder="Age" required>
+            <input type="text" id="input-med-blood" class="form-input" placeholder="Blood Group (e.g. O+)" required>
+          </div>
+
+          <label class="form-label">Chronic Conditions (comma-separated)</label>
+          <input type="text" id="input-med-conds" class="form-input" placeholder="Hypertension, Diabetes">
+
+          <label class="form-label">Allergies (comma-separated)</label>
+          <input type="text" id="input-med-allergies" class="form-input" placeholder="Penicillin, Sulfa">
+
+          <label class="form-label">Primary Physician Contact</label>
+          <input type="text" id="input-med-doctor" class="form-input" placeholder="Dr. Patel (+91...)">
+
+          <label class="form-label">Emergency Notes / Instructions</label>
+          <textarea id="input-med-notes" class="form-input" style="height:60px;"></textarea>
+
+          <div style="display:flex; gap:8px;">
+            <button type="submit" class="action-toggle-btn active" style="flex:1;">Save Medical ID</button>
+            <button type="button" class="action-toggle-btn" onclick="toggleMedicalEditor()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- View 3: Caregiver Contacts View -->
+    <div class="view-panel" id="view-contacts">
+      <div class="app-card">
+        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Alert Recipients</h4>
+        <div id="pwa-contacts-container">
+          <p style="font-size:12px; color:var(--text-sub); text-align:center; padding:20px;">Fetching contacts list...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 4: Sensors & Diagnostics View -->
+    <div class="view-panel" id="view-settings">
+      <div class="app-card">
+        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Gesture & Sensor Settings</h4>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
+          <div>
+            <div style="font-size:12px; font-weight:700;">Shake-to-SOS Detection</div>
+            <div style="font-size:10px; color:var(--text-sub);">Vigorously shaking device initiates 5s emergency countdown</div>
+          </div>
+          <input type="checkbox" id="shake-toggle-check" checked onchange="toggleShakeFeature(this.checked)" style="transform:scale(1.2);">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
+          <div>
+            <div style="font-size:12px; font-weight:700;">Live GPS Breadcrumb Tracking</div>
+            <div style="font-size:10px; color:var(--text-sub);">Transmits movement route to caregivers every 10 seconds</div>
+          </div>
+          <span class="sys-badge ready" style="font-size:9px;">Active</span>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
+          <div>
+            <div style="font-size:12px; font-weight:700;">Offline Sync Queue</div>
+            <div style="font-size:10px; color:var(--text-sub);">Queues alerts during zero-connectivity & auto-syncs when online</div>
+          </div>
+          <span class="sys-badge ready" id="offline-queue-status" style="font-size:9px;">0 Queued</span>
+        </div>
+      </div>
+
+      <div class="app-card">
+        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Network Diagnostics</h4>
+        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+          <span>Signal Strength</span>
+          <span id="diag-signal">-- dBm</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+          <span>Estimated Network Latency</span>
+          <span id="diag-latency">-- ms</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+          <span>Server Handshake</span>
+          <span id="diag-handshake" style="color:var(--accent-red); font-weight:700;">Offline</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0;">
+          <span>SMS Gateway Mode</span>
+          <span id="diag-sms" style="font-weight:700;">Simulated</span>
+        </div>
+      </div>
+      
+      <div class="app-card" style="font-size:11px; color:var(--text-sub); line-height:1.4;">
+        <b>💡 App Install Tip:</b><br>
+        To run this standalone on your mobile phone, open in Safari (iOS) and choose <b>"Add to Home Screen"</b> or Chrome (Android) and choose <b>"Install App"</b>.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom App Tab Bar (4 Tabs) -->
+  <nav class="tab-bar">
+    <div class="tab-item active" onclick="switchView('sos', this)">
+      <span class="tab-icon">🚨</span>
+      <span>EMERGENCY</span>
+    </div>
+    <div class="tab-item" onclick="switchView('medical', this)">
+      <span class="tab-icon">🏥</span>
+      <span>MEDICAL ID</span>
+    </div>
+    <div class="tab-item" onclick="switchView('contacts', this)">
+      <span class="tab-icon">👥</span>
+      <span>CONTACTS</span>
+    </div>
+    <div class="tab-item" onclick="switchView('settings', this)">
+      <span class="tab-icon">⚙️</span>
+      <span>SENSORS</span>
+    </div>
+  </nav>
+
+  <!-- Countdown Overlay Screen -->
+  <div class="app-countdown-overlay" id="pwa-countdown-overlay">
+    <h2 style="font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;" id="countdown-title">SOS ALERT INITIATED</h2>
+    <div class="num-big" id="pwa-countdown-num">5</div>
+    <p style="font-size:15px; opacity:0.9; text-align:center; max-width:300px; margin-top:14px;" id="countdown-sub">
+      Dispatching emergency distress alert and Medical ID to caregivers now.
+    </p>
+    <button class="btn-stop" id="stop-sos-btn" onclick="cancelSOSCountdown()">CANCEL ALERT</button>
+  </div>
+
+  <script src="js/trigger.js?v=7"></script>
+</body>
+</html>

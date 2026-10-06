@@ -1,0 +1,131 @@
+[
+  {
+    "id": "EPIC-01",
+    "type": "Epic",
+    "title": "Module 1: Emergency Detection & Sensor Intelligence",
+    "description": "Multi-mode trigger system supporting manual touch, gesture accelerometer shaking, and automatic fall detection patterns.",
+    "state": "Done",
+    "priority": 1,
+    "features": [
+      {
+        "id": "FEAT-101",
+        "title": "Gesture-Based Shake & Fall Detection",
+        "storyPoints": 13,
+        "stories": [
+          {
+            "id": "US-1011",
+            "title": "As an elderly user, I want to trigger an SOS by vigorously shaking my phone when I cannot look at the screen",
+            "storyPoints": 5,
+            "acceptanceCriteria": "Accelerometer event detects acceleration magnitude > 25 m/s2 across 3 consecutive spikes and initiates 5s emergency countdown."
+          },
+          {
+            "id": "US-1012",
+            "title": "As an emergency responder, I want automatic fall detection simulation so that sudden drop impacts alert caregivers",
+            "storyPoints": 8,
+            "acceptanceCriteria": "High g-force impact followed by zero motion triggers high-priority distress payload with mode='fall'."
+          }
+        ]
+      },
+      {
+        "id": "FEAT-102",
+        "title": "Medical ID Emergency Profile",
+        "storyPoints": 8,
+        "stories": [
+          {
+            "id": "US-1021",
+            "title": "As a paramedic, I want vital medical details (Blood group, allergies, chronic illness) included in every SOS payload",
+            "storyPoints": 8,
+            "acceptanceCriteria": "Emergency payload attaches medical-profile data and displays prominently on caregiver dashboard."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "EPIC-02",
+    "type": "Epic",
+    "title": "Module 2: Adaptive Decision Engine & Communication Failover",
+    "description": "Dynamic multi-channel selection evaluating signal strength, battery, latency, and historical reliability.",
+    "state": "Done",
+    "priority": 1,
+    "features": [
+      {
+        "id": "FEAT-201",
+        "title": "Dynamic Channel Scoring (Cellular vs SMS vs LoRa Mesh)",
+        "storyPoints": 13,
+        "stories": [
+          {
+            "id": "US-2011",
+            "title": "As an emergency system, evaluate network metrics every 3 seconds and select the optimal transmission pathway",
+            "storyPoints": 8,
+            "acceptanceCriteria": "Score = 30% Signal + 25% Latency + 20% Battery + 25% Historical Success Rate."
+          },
+          {
+            "id": "US-2012",
+            "title": "As a user in dead zones, automatically fallback to SMS gateway with Google Maps coordinates",
+            "storyPoints": 5,
+            "acceptanceCriteria": "When signal < -95 dBm, system designates SMS Gateway fallback."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "EPIC-03",
+    "type": "Epic",
+    "title": "Module 3: Caregiver Command Dashboard & Live Telemetry",
+    "description": "Real-time command center displaying interactive Leaflet GPS mapping, live breadcrumbs, audio sirens, and contact management.",
+    "state": "Done",
+    "priority": 1,
+    "features": [
+      {
+        "id": "FEAT-301",
+        "title": "Live GPS Tracking & Movement Breadcrumbs",
+        "storyPoints": 13,
+        "stories": [
+          {
+            "id": "US-3011",
+            "title": "As a caregiver, I want to track the movement path of the victim in real time via GPS breadcrumbs",
+            "storyPoints": 8,
+            "acceptanceCriteria": "Active SOS continuously transmits coordinate breadcrumbs every 10 seconds; dashboard draws polyline trail."
+          },
+          {
+            "id": "US-3012",
+            "title": "As a caregiver, hear an audible siren alarm and push notification when a distress signal arrives",
+            "storyPoints": 5,
+            "acceptanceCriteria": "Browser AudioContext plays repeating alarm audio and browser native notification displays alert."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "EPIC-04",
+    "type": "Epic",
+    "title": "Module 4: Azure DevOps CI/CD & Delivery Assurance",
+    "description": "Automated pipelines, containerization, automated API testing, and delivery assurance protocols.",
+    "state": "Done",
+    "priority": 2,
+    "features": [
+      {
+        "id": "FEAT-401",
+        "title": "Continuous Integration & Automated Testing Pipeline",
+        "storyPoints": 8,
+        "stories": [
+          {
+            "id": "US-4011",
+            "title": "As a software engineering team, execute automated test suite on every pull request using Azure Pipelines",
+            "storyPoints": 5,
+            "acceptanceCriteria": "azure-pipelines.yml runs npm test on ubuntu-latest and validates all endpoints."
+          },
+          {
+            "id": "US-4012",
+            "title": "As a DevOps engineer, produce Docker container image for deployment to Azure App Service",
+            "storyPoints": 3,
+            "acceptanceCriteria": "Dockerfile builds multi-stage Node.js alpine container with healthcheck."
+          }
+        ]
+      }
+    ]
+  }
+]

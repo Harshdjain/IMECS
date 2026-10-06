@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMECS — SOS Emergency Communication Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .qr-container {
+      margin-top: 40px;
+      display: flex;
+      gap: 24px;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+    .qr-card {
+      background: var(--bg-secondary);
+      border: 1px dashed var(--border-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: 24px;
+      flex: 1;
+      min-width: 280px;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--shadow-sm);
+    }
+    .qr-image {
+      background: #ffffff;
+      padding: 12px;
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-sm);
+      width: 174px;
+      height: 174px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="status-dot"></div>
+      <div>
+        <h1>IMECS Hub</h1>
+        <p>Intelligent Emergency Portal</p>
+      </div>
+    </div>
+    <span class="badge badge-success">System Online</span>
+  </header>
+
+  <main class="hub-container" style="margin-top: 40px; margin-bottom: 40px;">
+    <h2 class="hub-title">Emergency Communication Hub</h2>
+    <p class="hub-subtitle">
+      Welcome to the Intelligent Multi-Layer Emergency Communication System (IMECS).
+      Connect your mobile device and monitor alerts in real time.
+    </p>
+
+    <div class="hub-cards">
+      <!-- Elderly Trigger View -->
+      <a href="trigger.html" class="hub-card">
+        <div class="hub-card-icon">🚨</div>
+        <h3 class="hub-card-title">Elderly SOS Trigger App</h3>
+        <p class="hub-card-desc">
+          Simplified mobile-first interface optimized for elderly users.
+          Features a single-touch distress trigger, automatic GPS tracking, and real-time network path selection.
+        </p>
+        <span class="btn-arrow">Open Trigger App &rarr;</span>
+      </a>
+
+      <!-- Caregiver Dashboard View -->
+      <a href="dashboard.html" class="hub-card">
+        <div class="hub-card-icon">🛡️</div>
+        <h3 class="hub-card-title">Caregiver & Responder Dashboard</h3>
+        <p class="hub-card-desc">
+          Central monitoring panel. View incoming distress locations on a live map,
+          manage emergency contact numbers, review decision logs, and configure SMS gateways.
+        </p>
+        <span class="btn-arrow">Open Dashboard &rarr;</span>
+      </a>
+    </div>
+
+    <!-- QR Code Mobile Link Section -->
+    <div class="qr-container">
+      <!-- iOS Setup Card -->
+      <div class="qr-card">
+        <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px;">🍏 Link Apple iPhone</h3>
+        <div class="qr-image">
+          <img id="qr-code-ios" src="" alt="Loading iPhone QR Code..." style="width: 150px; height: 150px; display: block;">
+        </div>
+        <p class="qr-text">
+          Scan with your iPhone (Safari). Provides visual prompts to save this app directly to your Apple home screen.
+        </p>
+      </div>
+
+      <!-- Android Setup Card -->
+      <div class="qr-card">
+        <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px;">🤖 Link Android Phone</h3>
+        <div class="qr-image">
+          <img id="qr-code-android" src="" alt="Loading Android QR Code..." style="width: 150px; height: 150px; display: block;">
+        </div>
+        <p class="qr-text">
+          Scan with your Android phone (Chrome). Automatically opens the Chrome native PWA installer prompt.
+        </p>
+        </div>
+
+    <!-- Desktop Laptop Setup Section -->
+    <div class="qr-card" style="max-width: 784px; width: 100%; margin-top: 24px; text-align: left; align-items: flex-start; padding: 20px 24px;">
+      <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">💻 Access on Windows & Mac Laptops</h3>
+      <p class="qr-text" style="text-align: left; font-size:12px;">
+        The SOS Trigger and Caregiver Dashboard are fully optimized for PCs and Laptops running <b>Windows</b> or <b>macOS (Apple Mac)</b>:
+      </p>
+      <ul style="font-size: 12px; color: var(--text-secondary); margin-left: 20px; line-height: 1.6;">
+        <li><b>Windows (Chrome/Edge)</b>: Click the <b>"Install App"</b> icon (looks like a monitor with a down arrow) at the right end of the browser address bar to install it as a native desktop application.</li>
+        <li><b>macOS (Safari)</b>: Click the browser <b>File</b> menu and select <b>"Add to Dock"</b> to turn the app into a standalone Mac dock icon.</li>
+      </ul>
+    </div>
+
+    <div style="font-size:11px; font-family:monospace; background:var(--bg-secondary); padding:8px 16px; border-radius:6px; margin-top:24px; display:inline-block; border:1px solid var(--border-primary);" id="network-ip-display">
+      Detecting local IP address...
+    </div>
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/system-info');
+        if (res.ok) {
+          const data = await res.json();
+          
+          const iosUrl = `http://${data.localIp}:${data.port}/trigger.html?platform=ios`;
+          const androidUrl = `http://${data.localIp}:${data.port}/trigger.html?platform=android`;
+          
+          // Generate iOS & Android specific QR codes
+          document.getElementById('qr-code-ios').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(iosUrl)}`;
+          document.getElementById('qr-code-android').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(androidUrl)}`;
+          
+          document.getElementById('network-ip-display').innerHTML = `
+            Local Server IP: <b>${data.localIp}</b> | Port: <b>${data.port}</b><br>
+            Direct Trigger Link: <a href="http://${data.localIp}:${data.port}/trigger.html" target="_blank" style="color:var(--color-info); text-decoration:underline;">http://${data.localIp}:${data.port}/trigger.html</a>
+          `;
+        }
+      } catch (error) {
+        console.error("Failed to fetch system details:", error);
+        document.getElementById('network-ip-display').textContent = "Connection error. Make sure server is running.";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Dependency directories
+node_modules/
+
+# Local configuration
+.env
+
+# Diagnostic / Active Log files
+data/alerts.json
+
+# Archives
+*.zip
+
