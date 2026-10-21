@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>IMECS VitalPass™ - Emergency First Responder Medical Pass</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --primary: #ffd000;
+      --primary-border: #eab308;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      justify-content: center;
+    }
+    .pass-container {
+      width: 100%;
+      max-width: 520px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
+    .pass-header {
+      background: linear-gradient(135deg, #ffd000 0%, #fff59d 100%);
+      padding: 20px;
+      border-bottom: 2px solid var(--primary-border);
+      text-align: center;
+    }
+    .pass-badge {
+      display: inline-block;
+      background: #18181b;
+      color: #ffd000;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .pass-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+      color: #18181b;
+    }
+    .pass-subtitle {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: #3f3f46;
+      font-weight: 600;
+    }
+    .pass-body {
+      padding: 20px;
+    }
+    .patient-hero {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .patient-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #fef08a;
+      border: 3px solid #eab308;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+    .patient-info h2 {
+      margin: 0;
+      font-size: 20px;
+      color: #0f172a;
+    }
+    .patient-info p {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .vital-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .vital-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .vital-box.blood {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+    .vital-box.blood .vital-value {
+      color: #dc2626;
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .vital-box .vital-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 2px;
+    }
+    .vital-box .vital-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .medical-section {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .medical-section h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .medical-section p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .alert-pill {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .contacts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .contact-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    .contact-card .name {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .contact-card .relation {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .call-btn {
+      background: #10b981;
+      color: #ffffff;
+      text-decoration: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .call-btn:hover {
+      background: #059669;
+    }
+    .checkin-card {
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      margin-top: 16px;
+    }
+    .checkin-btn {
+      width: 100%;
+      background: #18181b;
+      color: #ffd000;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .checkin-btn:hover {
+      background: #27272a;
+    }
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="pass-container">
+    <div class="pass-header">
+      <div class="pass-badge">🚨 Official First Responder Pass</div>
+      <h1 class="pass-title">IMECS VitalPass™</h1>
+      <p class="pass-subtitle">Universal Emergency Health & Triage Identity Card</p>
+    </div>
+
+    <div class="pass-body">
+      <!-- Patient Overview -->
+      <div class="patient-hero">
+        <div class="patient-avatar">👤</div>
+        <div class="patient-info">
+          <h2 id="patientName">Senior Resident</h2>
+          <p id="patientAge">Age: 74 • Protected by IMECS Multi-Cloud</p>
+        </div>
+      </div>
+
+      <!-- Vital Badges -->
+      <div class="vital-grid">
+        <div class="vital-box blood">
+          <div class="vital-label">Blood Type</div>
+          <div class="vital-value" id="bloodGroup">O+</div>
+        </div>
+        <div class="vital-box">
+          <div class="vital-label">Geofence Status</div>
+          <div class="vital-value" style="color:#10b981;">Active SafeZone</div>
+        </div>
+      </div>
+
+      <!-- Critical Allergies -->
+      <div class="medical-section">
+        <h3>⚠️ Critical Allergies & Contraindications</h3>
+        <div class="alert-pill" id="allergiesList">Penicillin, Sulfa drugs</div>
+      </div>
+
+      <!-- Chronic Conditions -->
+      <div class="medical-section">
+        <h3>🩺 Known Medical Conditions</h3>
+        <p id="conditionsList">Hypertension, Mild Bradycardia, Fall Risk</p>
+      </div>
+
+      <!-- Daily Medications -->
+      <div class="medical-section">
+        <h3>💊 Daily Medications</h3>
+        <p id="medicationsList">Amlodipine 5mg, Aspirin 75mg daily</p>
+      </div>
+
+      <!-- Emergency Doctor & Hospital -->
+      <div class="medical-section">
+        <h3>🏥 Designated Doctor & Trauma Center</h3>
+        <p id="doctorHospital">Dr. Sarah Rao (+91 98401 23456) • Apollo Specialty / CMC Emergency Care</p>
+      </div>
+
+      <!-- Emergency Contacts (1-Tap Dial) -->
+      <div class="medical-section">
+        <h3>📞 Emergency Contacts (Tap to Call)</h3>
+        <div class="contacts-list" id="contactsList">
+          <div style="font-size:13px; color:var(--text-muted);">Loading emergency contacts...</div>
+        </div>
+      </div>
+
+      <!-- First Responder Check-in -->
+      <div class="checkin-card">
+        <strong>Are you on-scene assisting this senior?</strong>
+        <p style="margin:4px 0 0; font-size:12px; color:#713f12;">Tap below to immediately notify family and caregivers that emergency personnel have arrived.</p>
+        <button class="checkin-btn" id="checkinBtn" onclick="handleFirstResponderCheckin()">📍 Report Arrived at Scene</button>
+        <div id="checkinStatus" style="font-size:12px; font-weight:700; color:#059669; margin-top:6px; display:none;"></div>
+      </div>
+
+      <div class="footer-note">
+        IMECS Hybrid Cloud Emergency System • Encrypted First Responder Gateway
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function loadEmergencyPass() {
+      try {
+        const res = await fetch('/api/public-emergency-pass');
+        if (!res.ok) throw new Error('Failed to load pass');
+        const data = await res.json();
+
+        document.getElementById('patientName').textContent = data.fullName || 'Senior Resident';
+        document.getElementById('patientAge').textContent = `Age: ${data.age || 74} • Protected by IMECS Multi-Cloud`;
+        document.getElementById('bloodGroup').textContent = data.bloodGroup || 'O+';
+        document.getElementById('allergiesList').textContent = data.allergies || 'None declared';
+        document.getElementById('conditionsList').textContent = data.conditions || 'None declared';
+        document.getElementById('medicationsList').textContent = data.medications || 'None declared';
+        document.getElementById('doctorHospital').textContent = `${data.emergencyDoctor || 'Not listed'} • ${data.preferredHospital || 'Nearest Emergency Center'}`;
+
+        const contactsContainer = document.getElementById('contactsList');
+        if (data.primaryContacts && data.primaryContacts.length > 0) {
+          contactsContainer.innerHTML = data.primaryContacts.map(c => `
+            <div class="contact-card">
+              <div>
+                <div class="name">${c.name}</div>
+                <div class="relation">${c.relationship} • ${c.phone}</div>
+              </div>
+              <a href="tel:${c.phone}" class="call-btn">📞 Call</a>
+            </div>
+          `).join('');
+        } else {
+          contactsContainer.innerHTML = '<div style="font-size:13px; color:var(--text-muted);">No emergency contacts configured</div>';
+        }
+      } catch (err) {
+        console.error('Error fetching pass data:', err);
+      }
+    }
+
+    async function handleFirstResponderCheckin() {
+      const btn = document.getElementById('checkinBtn');
+      const status = document.getElementById('checkinStatus');
+      btn.disabled = true;
+      btn.textContent = 'Acquiring GPS location...';
+
+      let lat = null;
+      let lng = null;
+
+      if (navigator.geolocation) {
+        try {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000 });
+          });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } catch (e) {
+          console.warn('Geolocation unavailable for checkin:', e);
+        }
+      }
+
+      btn.textContent = 'Broadcasting arrival to family...';
+      try {
+        const res = await fetch('/api/public-emergency-pass/ping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            responderName: 'First Responder / On-Scene Assistance',
+            role: 'Paramedic / Bystander',
+            latitude: lat,
+            longitude: lng,
+            note: 'On-scene responder verified patient identity via VitalPass'
+          })
+        });
+
+        if (res.ok) {
+          btn.style.display = 'none';
+          status.style.display = 'block';
+          status.textContent = '✅ Family and caregivers have been alerted that assistance is on-scene!';
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = '📍 Report Arrived at Scene';
+        alert('Network error registering check-in.');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', loadEmergencyPass);
+  </script>
+</body>
+</html>

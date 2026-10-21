@@ -259,6 +259,14 @@ function setupSSE() {
         populateMedicalUI(medicalProfile);
       } else if (payload.type === 'status_updated') {
         updateAlertStatusInFeed(payload.data);
+      } else if (payload.type === 'sos_acknowledged') {
+        const idx = alertHistory.findIndex(a => a.id === payload.data.alertId);
+        if (idx !== -1) {
+          alertHistory[idx] = payload.data.alert;
+          renderAlertFeed();
+        }
+      } else if (payload.type === 'paramedic_arrived') {
+        showParamedicArrivedNotice(payload.data);
       } else if (payload.type === 'logs_cleared') {
         alertHistory = [];
         renderAlertFeed();
@@ -493,12 +501,22 @@ function renderAlertFeed() {
           </div>
         ` : ''}
 
+        <!-- Acknowledgment Status Handshake -->
+        ${alert.acknowledgment ? `
+          <div style="margin-top:6px; background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:6px 10px; border-radius:6px; font-size:11px; font-weight:700; display:flex; align-items:center; gap:6px;">
+            <span>✅</span> <span>En Route: <b>${alert.acknowledgment.responderName}</b> (ETA ~${alert.acknowledgment.etaMinutes} min) - <em>${alert.acknowledgment.note || 'Help dispatched'}</em></span>
+          </div>
+        ` : ''}
+
         <!-- Responder Action Controls -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; flex-wrap:wrap; gap:6px;">
-          <span style="font-size:10px; font-weight:700; color:${statusText.includes('Resolved') ? '#1b8552' : '#d9383a'};">
+          <span style="font-size:10px; font-weight:700; color:${statusText.includes('Resolved') ? '#1b8552' : (statusText.includes('Acknowledged') ? '#0078d4' : '#d9383a')};">
             Status: ${statusText}
           </span>
-          <div class="responder-actions-bar" style="margin-top:0;">
+          <div class="responder-actions-bar" style="margin-top:0; display:flex; gap:4px; flex-wrap:wrap;">
+            <button class="btn btn-sm btn-azure" onclick="openAcknowledgeModal('${alert.id}')" style="background:#0078d4; color:white; font-weight:700; border:none; padding:3px 8px; border-radius:4px; font-size:11px; cursor:pointer;" title="Reassure senior with your arrival ETA">
+              🤝 Acknowledge & Send ETA
+            </button>
             <a href="https://maps.google.com/?q=${alert.latitude},${alert.longitude}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background:#1a73e8; color:white; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,0.15);" title="Open exact coordinate pin in Google Maps">
               📍 Google Maps (${alert.latitude.toFixed(4)}, ${alert.longitude.toFixed(4)}) &nearr;
             </a>
@@ -517,6 +535,90 @@ function renderAlertFeed() {
     `;
   }).join('');
 }
+
+window.openAcknowledgeModal = function(alertId) {
+  const existing = document.getElementById('ack-modal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal-backdrop active';
+  modal.id = 'ack-modal';
+  modal.style.cssText = 'position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:99999;';
+  modal.innerHTML = `
+    <div class="custom-modal-card" style="width:90%; max-width:420px; padding:22px; background:#ffffff; border-radius:14px; border:2px solid #0078d4; box-shadow:0 12px 32px rgba(0,0,0,0.2);">
+      <h3 style="margin:0 0 6px; font-size:16px; color:#0078d4; display:flex; align-items:center; gap:6px;">
+        <span>🤝</span> <span>Acknowledge SOS & Send ETA</span>
+      </h3>
+      <p style="font-size:12px; color:var(--text-secondary); margin-bottom:14px;">
+        Reassures the senior on their screen immediately that assistance is en route with your name & arrival time.
+      </p>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Responder / Caregiver Name</label>
+        <input type="text" id="ack-responder-name" class="form-control" value="Harsh Jain (Caregiver)" style="width:100%; font-size:12px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+      </div>
+
+      <div style="margin-bottom:12px;">
+        <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Estimated Arrival Time (ETA)</label>
+        <select id="ack-eta-select" class="form-control" style="width:100%; font-size:12px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+          <option value="5">5 Minutes (Nearby)</option>
+          <option value="10" selected>10 Minutes (Standard Response)</option>
+          <option value="15">15 Minutes</option>
+          <option value="30">30 Minutes</option>
+          <option value="0">Emergency Services Dispatched</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="font-size:11px; font-weight:700; display:block; margin-bottom:4px;">Reassurance Note to Senior</label>
+        <input type="text" id="ack-note" class="form-control" value="Help is en route. Please sit down and stay calm." style="width:100%; font-size:12px; padding:6px 8px; border:1px solid #cbd5e1; border-radius:6px; box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button class="btn btn-sm" onclick="this.closest('.custom-modal-backdrop').remove()" style="padding:6px 12px; font-size:12px; background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer;">Cancel</button>
+        <button class="btn btn-sm btn-azure" onclick="submitAcknowledgment('${alertId}')" style="padding:6px 14px; font-size:12px; background:#0078d4; color:white; font-weight:800; border:none; border-radius:6px; cursor:pointer;">
+          Send Reassurance & ETA
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+};
+
+window.submitAcknowledgment = async function(alertId) {
+  const responder = document.getElementById('ack-responder-name').value;
+  const eta = parseInt(document.getElementById('ack-eta-select').value, 10);
+  const note = document.getElementById('ack-note').value;
+
+  try {
+    const res = await fetch(`/api/sos/${alertId}/acknowledge`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        responderName: responder,
+        etaMinutes: eta,
+        note
+      })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const modal = document.getElementById('ack-modal');
+      if (modal) modal.remove();
+
+      const idx = alertHistory.findIndex(a => a.id === alertId);
+      if (idx !== -1) {
+        alertHistory[idx] = data.alert;
+        renderAlertFeed();
+      }
+      alert('✅ Reassurance handshake sent to senior! Their phone screen now displays your arrival ETA.');
+    } else {
+      alert('Failed to acknowledge alert.');
+    }
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+};
 
 window.centerOnAlert = function(lat, lng) {
   map.setView([lat, lng], 17);
@@ -543,6 +645,25 @@ function updateAlertStatusInFeed(updatedAlert) {
   if (index !== -1) {
     alertHistory[index] = updatedAlert;
     renderAlertFeed();
+  }
+}
+
+function showParamedicArrivedNotice(ping) {
+  const banner = document.getElementById('incoming-alert-banner');
+  if (banner) {
+    banner.style.display = 'block';
+    banner.style.background = '#fef9c3';
+    banner.style.border = '2px solid #eab308';
+    banner.style.color = '#854d0e';
+    banner.innerHTML = `
+      <div style="font-weight:800; font-size:13px; display:flex; align-items:center; gap:6px;">
+        <span>🚨</span> <span>FIRST RESPONDER ARRIVED ON-SCENE!</span>
+      </div>
+      <div style="font-size:11px; margin-top:2px;">
+        <b>${ping.responderName}</b> (${ping.role}) scanned VitalPass™ and checked in at ${new Date(ping.timestamp).toLocaleTimeString()}.
+      </div>
+    `;
+    setTimeout(() => { banner.style.display = 'none'; }, 15000);
   }
 }
 

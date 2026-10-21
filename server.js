@@ -958,6 +958,93 @@ app.post('/api/sos/:id/breadcrumb', (req, res) => {
   res.json({ message: 'Live breadcrumb logged', breadcrumb });
 });
 
+// Acknowledge SOS Distress Alert with Two-Way Handshake
+app.post('/api/sos/:id/acknowledge', (req, res) => {
+  const { id } = req.params;
+  const { responderName, etaMinutes, note } = req.body;
+
+  const alerts = readJSON(ALERTS_FILE, []);
+  const alertIndex = alerts.findIndex(a => a.id === id);
+
+  if (alertIndex === -1) {
+    return res.status(404).json({ error: 'Alert not found' });
+  }
+
+  const responder = responderName || 'Primary Caregiver';
+  const eta = etaMinutes || 10;
+  const ackTimestamp = new Date().toISOString();
+
+  alerts[alertIndex].status = 'Acknowledged (Help En Route)';
+  alerts[alertIndex].acknowledgment = {
+    responderName: responder,
+    etaMinutes: eta,
+    note: note || 'Assistance is on the way. Stay calm.',
+    timestamp: ackTimestamp
+  };
+
+  writeJSON(ALERTS_FILE, alerts);
+
+  // Broadcast reassurance handshake event to Senior Trigger App and Caregiver screens
+  broadcastEvent('sos_acknowledged', {
+    alertId: id,
+    alert: alerts[alertIndex],
+    responderName: responder,
+    etaMinutes: eta,
+    timestamp: ackTimestamp,
+    reassuranceMessage: `Help is on the way! ${responder} acknowledged distress alert and is arriving in ~${eta} minutes.`
+  });
+
+  res.json({
+    message: 'Distress alert acknowledged. Reassurance handshake sent to senior.',
+    alert: alerts[alertIndex]
+  });
+});
+
+// First-Responder Public Health Pass API
+app.get('/api/public-emergency-pass', (req, res) => {
+  const medicalProfile = readJSON(MEDICAL_FILE, DEFAULT_MEDICAL);
+  const contacts = readJSON(CONTACTS_FILE, []);
+  const activeContacts = contacts.filter(c => c.active !== false);
+
+  res.json({
+    fullName: medicalProfile.fullName || 'Senior Resident',
+    age: medicalProfile.age || 74,
+    bloodGroup: medicalProfile.bloodGroup || 'O+',
+    allergies: medicalProfile.allergies || 'None declared',
+    conditions: medicalProfile.conditions || 'None declared',
+    medications: medicalProfile.medications || 'None declared',
+    emergencyDoctor: medicalProfile.emergencyDoctor || 'Not listed',
+    preferredHospital: medicalProfile.preferredHospital || 'Nearest Trauma Center',
+    primaryContacts: activeContacts.map(c => ({
+      name: c.name,
+      relationship: c.relationship,
+      phone: c.phone
+    })),
+    generatedAt: new Date().toISOString()
+  });
+});
+
+// First-Responder On-Scene Check-In
+app.post('/api/public-emergency-pass/ping', (req, res) => {
+  const { responderName, role, latitude, longitude, note } = req.body;
+  const pingRecord = {
+    id: 'PING_' + Date.now(),
+    responderName: responderName || 'First Responder / Paramedic',
+    role: role || 'Paramedic',
+    latitude: latitude || null,
+    longitude: longitude || null,
+    note: note || 'First responder arrived at senior location',
+    timestamp: new Date().toISOString()
+  };
+
+  broadcastEvent('paramedic_arrived', pingRecord);
+
+  res.json({
+    message: 'On-scene check-in registered. Caregivers notified.',
+    checkIn: pingRecord
+  });
+});
+
 // Azure Storage Sync all alerts
 app.post('/api/azure/storage/sync', async (req, res) => {
   const alerts = readJSON(ALERTS_FILE, []);

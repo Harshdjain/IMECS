@@ -51,9 +51,18 @@ IMECS is an advanced hybrid emergency communication system designed for elderly 
 - Pre-plotted trauma centers on the Leaflet map (e.g. Apollo Specialty Emergency Care, CMC Trauma Center).
 - Direct **"Navigate to Patient"** and **"Directions to Hospital"** one-click buttons linking into Google Maps and Apple Maps.
 
-### 7. 🚑 First Responder Action & Status Workflow
-- Caregivers can update incident statuses in real time: **"Dispatched EMS"**, **"Acknowledged"**, or **"Mark Resolved"**.
-- Export incident reports directly to JSON or formatted summary files.
+### 7. 🚑 Two-Way Emergency Reassurance Handshake & ETA Dispatch
+- Caregivers can click **"Acknowledge & Send ETA"** directly on any incoming distress incident.
+- Instantly notifies the senior citizen on their screen: *"HELP IS ON THE WAY! Harsh Jain acknowledged distress alert and is arriving in ~10 mins."*
+- Eliminates senior panic during critical minutes before physical arrival.
+
+### 8. 🚨 IMECS VitalPass™ (Paramedic & First-Responder Pass)
+- Open `/pass.html` or scan the emergency QR code from any smartphone.
+- Displays vital medical ID (Blood group, allergies, conditions, doctor, medications) without requiring account credentials.
+- Features 1-tap phone call buttons for emergency contacts and an on-scene **"Report Arrived at Scene"** check-in button that pings caregivers with paramedic GPS coordinates.
+
+### 9. 📱 Offline Native SMS Fallback Protocol
+- One-click emergency fallback button (`sms:`) that opens the device's native messaging application pre-filled with real-time GPS coordinates and Google Maps navigation link when cellular data or Wi-Fi is down.
 
 ---
 

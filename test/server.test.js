@@ -155,4 +155,22 @@ test('POST /api/sos triggers distress alert with medical ID & breadcrumbs', asyn
   });
   assert.strictEqual(breadcrumbRes.status, 200);
   assert.strictEqual(breadcrumbRes.data.breadcrumb.latitude, 12.9720);
+
+  // Test Two-Way Handshake Acknowledgment
+  const ackRes = await request('POST', `/api/sos/${alertId}/acknowledge`, {
+    responderName: 'Harsh Jain',
+    etaMinutes: 8,
+    note: 'Ambulance & family dispatched'
+  });
+  assert.strictEqual(ackRes.status, 200);
+  assert.strictEqual(ackRes.data.alert.acknowledgment.responderName, 'Harsh Jain');
+  assert.strictEqual(ackRes.data.alert.acknowledgment.etaMinutes, 8);
+});
+
+test('GET /api/public-emergency-pass returns first-responder medical data', async () => {
+  const res = await request('GET', '/api/public-emergency-pass');
+  assert.strictEqual(res.status, 200);
+  assert.ok(res.data.fullName);
+  assert.ok(res.data.bloodGroup);
+  assert.ok(Array.isArray(res.data.primaryContacts));
 });

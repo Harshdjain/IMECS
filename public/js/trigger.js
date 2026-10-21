@@ -682,3 +682,32 @@ function showDistressSuccessDialog(data, gMapsUrl) {
   `;
   document.body.appendChild(modal);
 }
+
+// Connect to SSE for real-time Reassurance Handshake
+function connectTriggerEvents() {
+  try {
+    const es = new EventSource('/api/events');
+    es.addEventListener('sos_acknowledged', (e) => {
+      const data = JSON.parse(e.data);
+      const banner = document.getElementById('reassurance-banner');
+      const msg = document.getElementById('reassurance-msg');
+      if (banner && msg) {
+        banner.style.display = 'block';
+        msg.innerHTML = `<strong>${data.responderName || 'Caregiver'}</strong> acknowledged distress alert at ${new Date(data.timestamp).toLocaleTimeString()} (ETA: ~<strong>${data.etaMinutes || 10} min</strong>). Stay calm, help is on the way!`;
+      }
+    });
+  } catch (err) {
+    console.warn('SSE subscription error:', err);
+  }
+}
+
+window.triggerNativeSmsFallback = function() {
+  const lat = (window.coordinates && window.coordinates.latitude) ? window.coordinates.latitude : 12.9716;
+  const lng = (window.coordinates && window.coordinates.longitude) ? window.coordinates.longitude : 79.1594;
+  const mapsUrl = `https://maps.google.com/?q=${lat},${lng}`;
+  const text = encodeURIComponent(`🚨 [IMECS EMERGENCY SOS] I need urgent help! My live location is: ${mapsUrl}`);
+  window.location.href = `sms:?body=${text}`;
+};
+
+// Initialize SSE listener
+connectTriggerEvents();
