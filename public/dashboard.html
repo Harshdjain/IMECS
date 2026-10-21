@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IMECS — Caregiver Command Dashboard</title>
+  <meta name="color-scheme" content="light">
+  <title>IMECS — Caregiver Command & Microsoft Azure Cloud Dashboard</title>
   
   <!-- Leaflet CSS for Maps -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
@@ -15,18 +16,18 @@
   <!-- Header -->
   <header class="app-header">
     <div class="brand-section">
-      <a href="index.html" style="text-decoration:none; font-size:18px; margin-right:8px;">&larr;</a>
+      <a href="index.html" style="text-decoration:none; font-size:18px; margin-right:8px;" title="Back to Hub">&larr;</a>
       <div class="status-dot" id="system-status-dot"></div>
       <div>
-        <h1>IMECS Command</h1>
-        <p>Caregiver & Responder Interface</p>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h1>IMECS Command</h1>
+          <span class="badge badge-azure" id="header-azure-badge">☁️ Azure Cloud Active</span>
+        </div>
+        <p>Caregiver, Responder & Multi-Cloud Telemetry Hub</p>
       </div>
     </div>
-    <div style="display:flex; align-items:center;">
-      <button class="btn btn-sm" id="med-profile-modal-btn" onclick="openMedicalModal()" style="font-size:11px; padding:3px 8px; margin-right:8px; background:var(--bg-secondary); border-color:var(--border-secondary);">
-        🏥 Medical Profile
-      </button>
-      <button class="btn btn-sm" id="notify-perm-btn" style="font-size:11px; padding:3px 8px; margin-right:12px; background:var(--bg-secondary); border-color:var(--border-secondary);">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <button class="btn btn-sm" id="notify-perm-btn" style="font-size:11px; padding:4px 10px; background:var(--bg-secondary); border-color:var(--border-secondary);">
         🔔 Enable Audio & Push Alerts
       </button>
       <span class="badge badge-info" id="system-alert-status">NORMAL OPS</span>
@@ -36,40 +37,49 @@
   <!-- Main Dashboard Grid -->
   <main class="dashboard-grid">
     
-    <!-- Left Panel: Contact Manager -->
+    <!-- Left Panel: Contacts, Medical ID & Safe Zone -->
     <section class="panel left-panel">
-      <div class="panel-header">
-        <h2>Emergency Contacts</h2>
-        <span class="badge badge-info" id="contacts-badge">0 Contacts</span>
+      <!-- Subnav Tabs -->
+      <div class="subnav-tabs">
+        <button class="subnav-tab active" onclick="switchLeftTab('contacts', this)">👥 Contacts</button>
+        <button class="subnav-tab" onclick="switchLeftTab('medical', this)">📋 Medical ID</button>
+        <button class="subnav-tab" onclick="switchLeftTab('safezone', this)">🛡️ Safe Zone</button>
       </div>
-      <div class="panel-content">
+
+      <!-- Tab 1: Contacts Content -->
+      <div id="left-tab-contacts" class="panel-content" style="padding:0;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="font-size:14px; font-weight:700;">Emergency Contacts</h2>
+          <span class="badge badge-info" id="contacts-badge">0 Contacts</span>
+        </div>
+
         <!-- Add Contact Form -->
-        <form id="contact-form" style="border-bottom: 1px solid var(--border-primary); padding-bottom: 20px; margin-bottom: 10px;">
+        <form id="contact-form" style="border-bottom: 1px solid var(--border-primary); padding-bottom: 14px; margin-bottom: 10px;">
           <input type="hidden" id="edit-contact-id">
-          <div class="form-group">
-            <label for="contact-name">Full Name</label>
-            <input type="text" id="contact-name" class="form-control" placeholder="e.g. Daughter, Doctor" required>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label for="contact-name" style="font-size:11px;">Full Name</label>
+            <input type="text" id="contact-name" class="form-control" style="font-size:12px; padding:6px 10px;" placeholder="e.g. Daughter, Family Doctor" required>
           </div>
-          <div class="form-group">
-            <label for="contact-phone">Mobile Number (with Country Code)</label>
-            <input type="tel" id="contact-phone" class="form-control" placeholder="e.g. +919876543210" required>
+          <div class="form-group" style="margin-bottom:8px;">
+            <label for="contact-phone" style="font-size:11px;">Mobile Number</label>
+            <input type="tel" id="contact-phone" class="form-control" style="font-size:12px; padding:6px 10px;" placeholder="e.g. +919876543210" required>
           </div>
-          <div class="form-group">
-            <label for="contact-rel">Relationship</label>
-            <select id="contact-rel" class="form-control">
+          <div class="form-group" style="margin-bottom:8px;">
+            <label for="contact-rel" style="font-size:11px;">Relationship</label>
+            <select id="contact-rel" class="form-control" style="font-size:12px; padding:6px 10px;">
               <option value="Family">Family</option>
               <option value="Doctor">Doctor</option>
               <option value="Neighbor">Neighbor</option>
               <option value="Emergency Services">Emergency Services</option>
             </select>
           </div>
-          <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-top:10px;">
+          <div class="form-group" style="display:flex; align-items:center; gap:8px; margin-top:6px; margin-bottom:10px;">
             <input type="checkbox" id="contact-active" checked>
-            <label for="contact-active" style="margin-bottom:0; cursor:pointer;">Active (Send SOS Alerts)</label>
+            <label for="contact-active" style="font-size:11px; margin-bottom:0; cursor:pointer;">Active (Send SOS Alerts)</label>
           </div>
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button type="submit" class="btn btn-primary" id="form-submit-btn" style="flex-grow:1;">Save Contact</button>
-            <button type="button" class="btn" id="form-cancel-btn" style="display:none;">Cancel</button>
+          <div style="display:flex; gap:8px;">
+            <button type="submit" class="btn btn-primary btn-sm" id="form-submit-btn" style="flex-grow:1;">Save Contact</button>
+            <button type="button" class="btn btn-sm" id="form-cancel-btn" style="display:none;">Cancel</button>
           </div>
         </form>
 
@@ -77,26 +87,114 @@
         <div class="contacts-list" id="contacts-container">
           <p style="font-size:12px; color:var(--text-tertiary); text-align:center; padding:20px;">Loading contacts...</p>
         </div>
+      </div>
 
-        <!-- Firewall / Network Diagnostics Box -->
-        <div class="simulation-panel" style="margin-top: 16px; border: 1px dashed var(--color-warning-border); background: var(--color-warning-bg); color: var(--color-warning); border-radius: var(--border-radius-sm);">
-          <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--color-warning);">📶 Phone Connection Guide</h4>
-          <p style="font-size: 10px; line-height: 1.4; margin-top: 4px; color: var(--text-secondary);">
-            If your iPhone shows "Server not responding" when scanning the QR code:
-          </p>
-          <ol style="font-size: 10px; margin-left: 14px; margin-top: 4px; color: var(--text-secondary); padding-left: 4px;">
-            <li>Ensure both PC and phone are on the <b>same Wi-Fi</b> network.</li>
-            <li>Run this command in <b>PowerShell (Admin)</b> on your PC to open the firewall port:</li>
-          </ol>
-          <code style="display: block; font-size: 9.5px; padding: 6px; background: var(--bg-primary); border-radius: 4px; word-break: break-all; margin-top: 6px; border: 1px solid var(--border-primary); color: var(--text-primary); user-select: all; font-family: monospace;">New-NetFirewallRule -DisplayName "IMECS SOS Port 3000" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3000</code>
+      <!-- Tab 2: Medical ID Content -->
+      <div id="left-tab-medical" class="panel-content" style="padding:0; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="font-size:14px; font-weight:700;">Patient Medical ID</h2>
+          <span class="badge badge-azure" style="font-size:9px;">Azure Health Record</span>
+        </div>
+        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;">
+          Vital medical info transmitted automatically to First Responders & Caregivers upon SOS trigger.
+        </p>
+
+        <form id="medical-form" style="display:flex; flex-direction:column; gap:10px;">
+          <div class="form-group">
+            <label style="font-size:11px;">Patient Full Name</label>
+            <input type="text" id="med-input-name" class="form-control" style="font-size:12px; padding:6px;" value="Senior Resident">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div class="form-group">
+              <label style="font-size:11px;">Age</label>
+              <input type="number" id="med-input-age" class="form-control" style="font-size:12px; padding:6px;" value="74">
+            </div>
+            <div class="form-group">
+              <label style="font-size:11px;">Blood Group</label>
+              <select id="med-input-blood" class="form-control" style="font-size:12px; padding:6px;">
+                <option value="O+">O Positive (O+)</option>
+                <option value="O-">O Negative (O-)</option>
+                <option value="A+">A Positive (A+)</option>
+                <option value="A-">A Negative (A-)</option>
+                <option value="B+">B Positive (B+)</option>
+                <option value="B-">B Negative (B-)</option>
+                <option value="AB+">AB Positive (AB+)</option>
+                <option value="AB-">AB Negative (AB-)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">Known Allergies</label>
+            <input type="text" id="med-input-allergies" class="form-control" style="font-size:12px; padding:6px;" placeholder="e.g. Penicillin, Peanuts">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">Pre-existing Conditions</label>
+            <input type="text" id="med-input-conditions" class="form-control" style="font-size:12px; padding:6px;" placeholder="e.g. Hypertension, Cardiac history, Fall risk">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">Current Daily Medications</label>
+            <input type="text" id="med-input-meds" class="form-control" style="font-size:12px; padding:6px;" placeholder="e.g. Amlodipine 5mg, Aspirin">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">Emergency Primary Physician</label>
+            <input type="text" id="med-input-doctor" class="form-control" style="font-size:12px; padding:6px;" placeholder="Dr. Name & Phone">
+          </div>
+          <div class="form-group">
+            <label style="font-size:11px;">Preferred Hospital / Trauma Center</label>
+            <input type="text" id="med-input-hospital" class="form-control" style="font-size:12px; padding:6px;" placeholder="e.g. Apollo Specialty / CMC">
+          </div>
+          <button type="submit" class="btn btn-azure btn-sm" style="margin-top:6px;">Update Medical Profile</button>
+        </form>
+      </div>
+
+      <!-- Tab 3: Safe Zone Geofence Content -->
+      <div id="left-tab-safezone" class="panel-content" style="padding:0; display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <h2 style="font-size:14px; font-weight:700;">Safe Zone Geofence</h2>
+          <span class="safezone-badge inside" id="safezone-live-badge">Perimeter Active</span>
+        </div>
+        <p style="font-size:11px; color:var(--text-secondary); margin-bottom:12px;">
+          Defines the safe residential boundary. Alerts trigger on the map if the resident wanders outside.
+        </p>
+
+        <form id="safezone-form" style="display:flex; flex-direction:column; gap:10px;">
+          <div class="form-group">
+            <label style="font-size:11px;">Safe Zone Name</label>
+            <input type="text" id="sz-input-name" class="form-control" style="font-size:12px; padding:6px;" value="Home & Senior Living Campus">
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <div class="form-group">
+              <label style="font-size:11px;">Center Latitude</label>
+              <input type="number" step="0.0001" id="sz-input-lat" class="form-control" style="font-size:12px; padding:6px;" value="12.9716">
+            </div>
+            <div class="form-group">
+              <label style="font-size:11px;">Center Longitude</label>
+              <input type="number" step="0.0001" id="sz-input-lng" class="form-control" style="font-size:12px; padding:6px;" value="79.1594">
+            </div>
+          </div>
+          <div class="form-group">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <label style="font-size:11px;">Safe Radius (Meters): <b id="sz-radius-label">600m</b></label>
+            </div>
+            <input type="range" id="sz-input-radius" min="100" max="3000" step="50" value="600" style="width:100%; cursor:pointer;">
+          </div>
+          <div style="display:flex; gap:8px; margin-top:6px;">
+            <button type="submit" class="btn btn-primary btn-sm" style="flex:1;">Save Geofence</button>
+            <button type="button" class="btn btn-sm" onclick="centerMapOnSafeZone()" style="background:var(--bg-secondary);">Center Map</button>
+          </div>
+        </form>
+
+        <div style="margin-top:16px; padding:10px; background:var(--bg-secondary); border-radius:8px; font-size:11px;">
+          <b>Current Status:</b>
+          <div style="margin-top:4px;" id="safezone-perimeter-status">Resident is inside safe perimeter.</div>
         </div>
       </div>
     </section>
 
-    <!-- Center Panel: Map & Metrics -->
+    <!-- Center Panel: Map & Telemetry Metrics -->
     <section class="center-panel">
-      <!-- Top Metrics Dashboard -->
-      <div class="metrics-row">
+      <!-- Top Metrics Row -->
+      <div class="metrics-row" style="grid-template-columns: repeat(5, 1fr);">
         <div class="metric-card">
           <span class="metric-label">Active Nodes</span>
           <span class="metric-value" id="m-nodes">12</span>
@@ -110,66 +208,111 @@
           <span class="metric-value" id="m-cov">94%</span>
         </div>
         <div class="metric-card">
-          <span class="metric-label">Latency ms</span>
-          <span class="metric-value" id="m-lat">38ms</span>
+          <span class="metric-label">Heart Rate (IoT)</span>
+          <span class="metric-value" id="m-hr" style="color:#d9383a;"><span class="vital-icon heart-pulse">❤️</span> <span id="dash-hr-val">76</span> <small style="font-size:10px;">BPM</small></span>
+        </div>
+        <div class="metric-card">
+          <span class="metric-label">SpO2 Oxygen</span>
+          <span class="metric-value" id="m-spo2" style="color:#1b60b8;">🫁 <span id="dash-spo2-val">98%</span></span>
         </div>
       </div>
 
-      <!-- Live Incident & Medical ID Alert Banner -->
-      <div id="live-incident-banner" style="display:none; background:var(--color-danger-bg); border-radius:8px; border:1px solid var(--color-danger-border); padding:10px 14px; margin-bottom:12px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:16px;">🚨</span>
-            <span style="font-size:13px; font-weight:800; color:var(--color-danger);" id="banner-incident-title">DISTRESS SIGNAL DETECTED</span>
-            <span class="badge badge-danger" id="banner-trigger-mode">SOS</span>
-          </div>
-          <span style="font-size:11px; color:var(--text-secondary);" id="banner-incident-time">Just now</span>
-        </div>
-        <div style="display:flex; gap:12px; margin-top:8px; font-size:11px; flex-wrap:wrap; align-items:center;">
-          <span><b>Patient:</b> <span id="banner-patient-name">--</span></span>
-          <span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-weight:700;" id="banner-blood-group">Blood: --</span>
-          <span><b>Conditions:</b> <span id="banner-conditions">--</span></span>
-          <span><b>Allergies:</b> <span id="banner-allergies" style="color:var(--color-danger); font-weight:700;">--</span></span>
-          <span><b>Live Breadcrumbs:</b> <span id="banner-breadcrumbs-count" style="font-weight:700; color:var(--color-info);">1 Point</span></span>
-        </div>
-      </div>
-
-      <!-- Live GPS Map -->
-      <div class="map-container">
+      <!-- Live GPS Map with Geofence & Hospitals -->
+      <div class="map-container" style="position:relative;">
         <div id="map"></div>
+        <!-- Map Quick Overlay Controls -->
+        <div style="position:absolute; bottom:16px; left:16px; z-index:900; background:var(--bg-primary); padding:6px 10px; border-radius:8px; border:1px solid var(--border-secondary); font-size:11px; box-shadow:var(--shadow-sm); display:flex; gap:12px; align-items:center;">
+          <span style="display:flex; align-items:center; gap:4px;"><span style="color:#0078d4;">🔵</span> Safe Zone</span>
+          <span style="display:flex; align-items:center; gap:4px;"><span style="color:#d9383a;">🚨</span> Distress Fix</span>
+          <span style="display:flex; align-items:center; gap:4px;">🏥 Hospitals (Apollo/CMC)</span>
+        </div>
       </div>
     </section>
 
-    <!-- Right Panel: Simulation & Logs -->
+    <!-- Right Panel: Azure Suite, Gateways, Simulations & Logs -->
     <section class="panel right-panel">
-      <div class="panel-header">
-        <h2>Network & Logs</h2>
+      <!-- Subnav Tabs -->
+      <div class="subnav-tabs">
+        <button class="subnav-tab active" onclick="switchRightTab('azure', this)">☁️ Azure & SMS</button>
+        <button class="subnav-tab" onclick="switchRightTab('sim', this)">⚡ Simulations</button>
+        <button class="subnav-tab" onclick="switchRightTab('logs', this)">📜 Event Logs</button>
       </div>
-      <div class="panel-content" style="display:flex; flex-direction:column; gap:16px;">
+
+      <!-- Tab 1: Microsoft Azure Suite & Gateways -->
+      <div id="right-tab-azure" class="panel-content" style="padding:0; display:flex; flex-direction:column; gap:12px;">
         
-        <!-- Twilio Gateway Setup Form -->
-        <div class="simulation-panel" style="margin-bottom: 0;">
-          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-            <span>Twilio SMS Gateway</span>
-            <span class="badge" id="sms-gate-status" style="font-size:9px; padding:2px 6px;">Loading...</span>
-          </h3>
+        <!-- Multi-Cloud Gateway Configuration Form -->
+        <div class="simulation-panel" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); font-weight:700;">
+              Multi-Cloud SMS Gateway
+            </h3>
+            <span class="badge" id="sms-gate-status" style="font-size:9px; padding:2px 6px;">Simulated</span>
+          </div>
+
           <form id="sms-config-form" style="display:flex; flex-direction:column; gap:8px;">
-            <div style="display:flex; gap:6px; align-items:center; margin-bottom:4px;">
-              <input type="checkbox" id="sms-simulate-toggle" checked>
-              <label for="sms-simulate-toggle" style="font-size:11px; margin-bottom:0; cursor:pointer;">Simulate SMS Alerts</label>
+            <div class="form-group">
+              <label style="font-size:11px; font-weight:600;">Dispatch Gateway Mode</label>
+              <select id="gateway-provider-select" class="form-control" style="font-size:11px; padding:5px 8px;">
+                <option value="simulated">Simulated Gateway (Local Zero-Setup Demo)</option>
+                <option value="azure">Microsoft Azure Communication Services (ACS)</option>
+                <option value="twilio">Twilio Cloud Telephony</option>
+                <option value="hybrid">Hybrid Multi-Cloud (Azure ACS Primary &rarr; Twilio Failover)</option>
+              </select>
             </div>
-            <div id="twilio-fields" style="display:none; flex-direction:column; gap:6px;">
+
+            <!-- Azure ACS Fields -->
+            <div id="azure-acs-fields" style="display:none; flex-direction:column; gap:6px; background:var(--bg-primary); padding:8px; border-radius:6px; border:1px solid var(--border-primary);">
+              <span style="font-size:10px; font-weight:700; color:var(--color-azure);">Microsoft Azure ACS Credentials:</span>
+              <input type="password" id="azure-acs-conn" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Azure ACS Connection String (endpoint=...;accesskey=...)">
+              <input type="text" id="azure-acs-phone" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Azure Purchased Phone Number (e.g. +18005550199)">
+            </div>
+
+            <!-- Twilio Fields -->
+            <div id="twilio-fields" style="display:none; flex-direction:column; gap:6px; background:var(--bg-primary); padding:8px; border-radius:6px; border:1px solid var(--border-primary);">
+              <span style="font-size:10px; font-weight:700; color:#d9383a;">Twilio Credentials:</span>
               <input type="text" id="twilio-sid" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Account SID">
               <input type="password" id="twilio-token" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Auth Token">
               <input type="text" id="twilio-phone" class="form-control" style="padding:5px 8px; font-size:11px;" placeholder="Twilio Phone Number">
             </div>
-            <button type="submit" class="btn btn-sm btn-primary" style="font-size:11px; padding:4px 8px;">Save configuration</button>
+
+            <div style="display:flex; gap:6px; margin-top:4px;">
+              <button type="submit" class="btn btn-sm btn-azure" style="flex:1; font-size:11px; padding:6px;">Save Gateway Configuration</button>
+            </div>
           </form>
+
+          <!-- Test SMS Dispatch Button -->
+          <div style="margin-top:10px; border-top:1px dashed var(--border-primary); padding-top:8px;">
+            <label style="font-size:10px; color:var(--text-secondary); display:block; margin-bottom:4px;">Test Live SMS Dispatch:</label>
+            <div style="display:flex; gap:6px;">
+              <input type="tel" id="test-sms-phone" class="form-control" style="padding:4px 8px; font-size:11px; flex:1;" placeholder="Phone with country code (e.g. +91...)">
+              <button class="btn btn-sm" id="send-test-sms-btn" style="font-size:11px; padding:4px 8px; background:var(--bg-secondary);">Send Test</button>
+            </div>
+          </div>
         </div>
 
-        <!-- Network Simulation panel -->
-        <div class="simulation-panel" style="margin-bottom: 0;">
-          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px;">IMECS Simulations</h3>
+        <!-- Microsoft Azure Storage Archival Panel -->
+        <div class="simulation-panel" style="margin-bottom:0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); font-weight:700;">
+              Azure Blob Storage Archival
+            </h3>
+            <span class="badge badge-azure" id="storage-status-badge" style="font-size:9px; padding:2px 6px;">Ready</span>
+          </div>
+          <p style="font-size:11px; color:var(--text-secondary); margin-bottom:8px;">
+            Automatic cloud backup of incident JSON records and voice recordings to Azure Blob Storage container <code style="font-size:10px;" id="blob-container-label">sos-incident-records</code>.
+          </p>
+          <button class="btn btn-sm btn-azure" id="sync-azure-storage-btn" style="width:100%; font-size:11px; padding:6px;">
+            ☁️ Sync Incidents to Azure Blob Storage
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Tab 2: IMECS Simulation Controls -->
+      <div id="right-tab-sim" class="panel-content" style="padding:0; display:none; flex-direction:column; gap:12px;">
+        <div class="simulation-panel" style="margin-bottom:0;">
+          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; font-weight:700;">Network Simulations</h3>
           <div class="sim-buttons">
             <button class="btn btn-sm btn-danger" onclick="triggerSimEvent('blackout')">Tower Blackout</button>
             <button class="btn btn-sm btn-danger" onclick="triggerSimEvent('flood')">Flood Zone</button>
@@ -178,41 +321,39 @@
           </div>
         </div>
 
-        <!-- Event Logs feed -->
-        <div style="flex-grow:1; display:flex; flex-direction:column; min-height:0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary);">Real-Time Event Logs</h3>
-            <button class="btn btn-sm" id="clear-logs-btn" style="font-size:10px; padding:2px 6px;">Clear logs</button>
-          </div>
-          <div class="log-feed" id="log-feed-container">
-            <div style="font-size:11px; color:var(--text-tertiary); text-align:center; padding:20px;">No events recorded. Waiting for alerts...</div>
+        <div class="simulation-panel" style="margin-bottom:0;">
+          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); margin-bottom:8px; font-weight:700;">Emergency Scenario Tests</h3>
+          <div class="sim-buttons">
+            <button class="btn btn-sm btn-danger" onclick="simulateFallAlertOnDashboard()">Simulate Fall Alert</button>
+            <button class="btn btn-sm btn-danger" onclick="simulateCardiacEmergency()">Simulate High HR SOS</button>
+            <button class="btn btn-sm btn-primary" onclick="simulateGeofenceBreach()">Simulate Geofence Exit</button>
+            <button class="btn btn-sm" onclick="exportIncidentSummaryReport()">Export Incident PDF/JSON</button>
           </div>
         </div>
       </div>
+
+      <!-- Tab 3: Real-Time Event Logs Feed -->
+      <div id="right-tab-logs" class="panel-content" style="padding:0; display:none; flex-direction:column; height:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <h3 style="font-size:12px; text-transform:uppercase; color:var(--text-secondary); font-weight:700;">Incident & Event Logs</h3>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm" id="export-logs-btn" style="font-size:10px; padding:2px 8px;">Export</button>
+            <button class="btn btn-sm" id="clear-logs-btn" style="font-size:10px; padding:2px 8px;">Clear</button>
+          </div>
+        </div>
+        <div class="log-feed" id="log-feed-container" style="flex:1; max-height:450px;">
+          <div style="font-size:11px; color:var(--text-tertiary); text-align:center; padding:20px;">No events recorded. Waiting for alerts...</div>
+        </div>
+      </div>
+
     </section>
 
   </main>
-
-  <!-- Medical Profile Modal -->
-  <div id="medical-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center; padding:20px;">
-    <div style="background:var(--bg-primary); max-width:520px; width:100%; border-radius:12px; border:1px solid var(--border-primary); padding:20px; box-shadow:0 12px 36px rgba(0,0,0,0.3);">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; border-bottom:1px solid var(--border-primary); padding-bottom:8px;">
-        <h3 style="font-size:15px; font-weight:800;">🏥 Registered Patient Medical Emergency Profile</h3>
-        <button onclick="closeMedicalModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-secondary);">&times;</button>
-      </div>
-      <div id="modal-medical-content" style="font-size:12px; line-height:1.6; color:var(--text-primary);">
-        Loading medical profile...
-      </div>
-      <div style="margin-top:16px; text-align:right;">
-        <button class="btn btn-sm" onclick="closeMedicalModal()">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Leaflet JS for Maps -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   
   <!-- Dashboard JS Logic -->
-  <script src="js/dashboard.js?v=6"></script>
+  <script src="js/dashboard.js?v=7"></script>
 </body>
 </html>

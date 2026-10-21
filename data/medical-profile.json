@@ -2,14 +2,23 @@
   "fullName": "Test Patient",
   "age": 75,
   "bloodGroup": "B+",
-  "chronicConditions": [
-    "Hypertension"
-  ],
+  "emergencyDoctor": "Dr. Sarah Rao (+91 98401 23456)",
   "allergies": [
     "None"
   ],
+  "conditions": "Hypertension, Mild Bradycardia, Fall Risk",
   "medications": [
     "Aspirin"
+  ],
+  "preferredHospital": "Apollo Specialty / CMC Emergency Care",
+  "safeZone": {
+    "name": "Home & Senior Living Campus",
+    "latitude": 12.9716,
+    "longitude": 79.1594,
+    "radiusMeters": 2750
+  },
+  "chronicConditions": [
+    "Hypertension"
   ],
   "emergencyNotes": "Test notes"
 }

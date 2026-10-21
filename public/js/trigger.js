@@ -1,4 +1,4 @@
-// IMECS SOS PWA Client Script (Real-Life Sensor & Emergency Suite)
+// IMECS SOS PWA Client Script with Microsoft Azure IoT & Health Telemetry
 
 // PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
@@ -10,51 +10,68 @@ if ('serviceWorker' in navigator) {
 }
 
 // State variables
-let coordinates = { latitude: 12.9716, longitude: 79.1594 }; // Default to VIT Vellore
-let batteryLevel = 85;
-let signalStrength = -75; // dBm
-let latency = 45; // ms
-let contacts = [];
-let medicalProfile = null;
-let systemMode = 'Ready';
-let countdownInterval = null;
-let currentScoreChannel = 'cellular';
+let coordinates = { latitude: 12.9716, longitude: 79.1594 }; // Default VIT Vellore coordinates
+let batteryLevel = 88;
+let signalStrength = -72; // dBm
+let latency = 38; // ms
+let currentScoreChannel = 'Cellular Data';
 let serverStatus = 'Offline';
-let currentTriggerMode = 'manual';
-let activeAlertId = null;
-let breadcrumbInterval = null;
+let currentTriggerType = 'manual_sos';
+let countdownInterval = null;
 
-// Sensor & Bystander States
-let shakeEnabled = true;
-let bystanderSirenActive = false;
-let sirenAudioCtx = null;
-let sirenOscillator = null;
+// Health Vitals (Azure IoT Hub Connected)
+let vitals = {
+  heartRate: 76,
+  bloodOxygen: 98,
+  skinTemp: 36.8,
+  fallDetected: false,
+  impactGForce: 1.02
+};
 
-// Constants for decision calculations
-const WEIGHT_SIGNAL = 0.30;
-const WEIGHT_LATENCY = 0.25;
-const WEIGHT_BATTERY = 0.20;
-const WEIGHT_SUCCESS = 0.25;
+// Medical Profile & Safe Zone
+let medicalProfile = null;
+let isOutsideSafeZone = false;
+let safeZoneDistanceMeters = 0;
+
+// Audio Recording (Voice Memo)
+let mediaRecorder = null;
+let audioChunks = [];
+let voiceMemoBase64 = null;
+let isRecordingVoice = false;
 
 // DOM Elements
 const gpsPos = document.getElementById('gps-pos');
-const battLev = document.getElementById('batt-lev');
+const safezoneIcon = document.getElementById('safezone-icon');
+const safezoneText = document.getElementById('safezone-text');
 const triggerSosBtn = document.getElementById('trigger-sos-btn');
 const stopSosBtn = document.getElementById('stop-sos-btn');
+const simulateFallBtn = document.getElementById('simulate-fall-btn');
+
+// Vitals DOM Elements
+const vitHr = document.getElementById('vit-hr');
+const vitSpo2 = document.getElementById('vit-spo2');
+const vitTemp = document.getElementById('vit-temp');
+const vitalsPageHr = document.getElementById('vitals-page-hr');
+const vitalsPageSpo2 = document.getElementById('vitals-page-spo2');
+const vitalsPageTemp = document.getElementById('vitals-page-temp');
+const vitalsPageGforce = document.getElementById('vitals-page-gforce');
+const simTachycardiaBtn = document.getElementById('sim-tachycardia-btn');
+const simNormalVitalsBtn = document.getElementById('sim-normalvitals-btn');
+
+// Voice Memo Elements
+const voiceRecordBtn = document.getElementById('voice-record-btn');
+const voiceMemoStatus = document.getElementById('voice-memo-status');
+const voiceAudioPreview = document.getElementById('voice-audio-preview');
+const micIcon = document.getElementById('mic-icon');
+const micText = document.getElementById('mic-text');
+
+// Overlay Elements
 const pwaCountdownOverlay = document.getElementById('pwa-countdown-overlay');
 const pwaCountdownNum = document.getElementById('pwa-countdown-num');
 const countdownTitle = document.getElementById('countdown-title');
-const countdownSub = document.getElementById('countdown-sub');
+const countdownTriggerType = document.getElementById('countdown-trigger-type');
 const sysModeBadge = document.getElementById('sys-mode-badge');
-const offlineBadge = document.getElementById('offline-badge');
-const offlineQueueStatus = document.getElementById('offline-queue-status');
-
-// Diagnostic UI Elements
-const diagSignal = document.getElementById('diag-signal');
-const diagLatency = document.getElementById('diag-latency');
-const diagHandshake = document.getElementById('diag-handshake');
-const diagSms = document.getElementById('diag-sms');
-const pwaContactsContainer = document.getElementById('pwa-contacts-container');
+const azureStatusPill = document.getElementById('azure-status-pill');
 
 // Channel Score UI Bars
 const barCell = document.getElementById('bar-cell');
@@ -64,129 +81,82 @@ const valSms = document.getElementById('val-sms');
 const barMesh = document.getElementById('bar-mesh');
 const valMesh = document.getElementById('val-mesh');
 
-// Medical Profile UI
-const medBloodBadge = document.getElementById('med-blood-badge');
-const medNameDisplay = document.getElementById('med-name-display');
-const medSubDisplay = document.getElementById('med-sub-display');
-const medConditionsBadges = document.getElementById('med-conditions-badges');
-const medAllergiesBadges = document.getElementById('med-allergies-badges');
-const medMedicationsList = document.getElementById('med-medications-list');
-const medNotesDisplay = document.getElementById('med-notes-display');
-const medicalEditForm = document.getElementById('medical-edit-form');
+// Diagnostics Elements
+const diagSignal = document.getElementById('diag-signal');
+const diagLatency = document.getElementById('diag-latency');
+const diagHandshake = document.getElementById('diag-handshake');
+const diagAzureAcs = document.getElementById('diag-azure-acs');
+const diagSafezone = document.getElementById('diag-safezone');
 
-// View Tab Navigation
+// Tab Switcher
 window.switchView = function(viewName, clickedEl) {
   document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
   
-  const targetView = document.getElementById(`view-${viewName}`);
-  if (targetView) targetView.classList.add('active');
+  const target = document.getElementById(`view-${viewName}`);
+  if (target) target.classList.add('active');
   if (clickedEl) clickedEl.classList.add('active');
   
-  if (viewName === 'contacts') {
-    fetchContactsList();
-  } else if (viewName === 'medical') {
+  if (viewName === 'medical') {
     fetchMedicalProfile();
   }
 };
 
 // Initialize Application
-function initApp() {
+window.addEventListener('DOMContentLoaded', () => {
   setupBattery();
   setupGeolocation();
+  setupFallDetectionSensor();
+  setupVoiceMemoRecorder();
   fetchMedicalProfile();
-  setupNetworkListeners();
-  setupShakeDetection();
   pingServer();
-  
-  // Scoring updates
+
+  // Periodic channel evaluation and vitals telemetry sync
   evaluateChannels();
   setInterval(() => {
+    fluctuateVitals();
     evaluateChannels();
     pingServer();
-  }, 3000);
-  
-  // Event listeners
-  const sosBtn = document.getElementById('trigger-sos-btn');
-  const cancelBtn = document.getElementById('stop-sos-btn');
-  if (sosBtn) sosBtn.onclick = () => startSOSCountdown('manual');
-  if (cancelBtn) cancelBtn.onclick = cancelSOSCountdown;
-  
-  // Check offline queue
-  updateOfflineQueueUI();
-}
+  }, 4000);
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
+  // Event Listeners
+  if (triggerSosBtn) triggerSosBtn.addEventListener('click', () => startSOSCountdown('manual_sos', 5));
+  if (stopSosBtn) stopSosBtn.addEventListener('click', cancelSOSCountdown);
+  if (simulateFallBtn) simulateFallBtn.addEventListener('click', handleSimulateFall);
 
-// Setup Network Listeners & Offline Queue Sync
-function setupNetworkListeners() {
-  const updateOnlineStatus = () => {
-    if (navigator.onLine) {
-      if (offlineBadge) offlineBadge.style.display = 'none';
-      syncOfflineQueue();
-    } else {
-      if (offlineBadge) offlineBadge.style.display = 'inline-block';
-    }
-  };
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
-  updateOnlineStatus();
-}
+  if (simTachycardiaBtn) simTachycardiaBtn.addEventListener('click', () => {
+    vitals.heartRate = 132;
+    vitals.bloodOxygen = 93;
+    updateVitalsUI();
+    pushAzureIoTTelemetry();
+  });
 
-function updateOfflineQueueUI() {
-  const queue = JSON.parse(localStorage.getItem('imecs_offline_queue') || '[]');
-  if (offlineQueueStatus) {
-    offlineQueueStatus.textContent = `${queue.length} Queued`;
-    offlineQueueStatus.className = queue.length > 0 ? 'sys-badge sending' : 'sys-badge ready';
-  }
-}
+  if (simNormalVitalsBtn) simNormalVitalsBtn.addEventListener('click', () => {
+    vitals.heartRate = 74;
+    vitals.bloodOxygen = 98;
+    vitals.fallDetected = false;
+    vitals.impactGForce = 1.02;
+    updateVitalsUI();
+    pushAzureIoTTelemetry();
+  });
+});
 
-async function syncOfflineQueue() {
-  const queue = JSON.parse(localStorage.getItem('imecs_offline_queue') || '[]');
-  if (queue.length === 0) return;
-
-  console.log(`[Offline Sync] Attempting to flush ${queue.length} queued alert(s)...`);
-  const remaining = [];
-  for (const alertPayload of queue) {
-    try {
-      const res = await fetch('/api/sos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(alertPayload)
-      });
-      if (!res.ok) remaining.push(alertPayload);
-    } catch (e) {
-      remaining.push(alertPayload);
-    }
-  }
-  localStorage.setItem('imecs_offline_queue', JSON.stringify(remaining));
-  updateOfflineQueueUI();
-}
-
-// Setup Battery Level
+// ==========================================
+// BATTERY & GEOLOCATION
+// ==========================================
 function setupBattery() {
   if (navigator.getBattery) {
     navigator.getBattery().then(batt => {
-      updateBatteryUI(batt.level * 100);
+      batteryLevel = Math.round(batt.level * 100);
       batt.addEventListener('levelchange', () => {
-        updateBatteryUI(batt.level * 100);
+        batteryLevel = Math.round(batt.level * 100);
       });
     });
   } else {
-    updateBatteryUI(Math.floor(70 + Math.random() * 25));
+    batteryLevel = Math.floor(75 + Math.random() * 20);
   }
 }
 
-function updateBatteryUI(level) {
-  batteryLevel = Math.round(level);
-  if (battLev) battLev.textContent = `${batteryLevel}%`;
-}
-
-// Setup Geolocation & Continuous Watcher
 function setupGeolocation() {
   if (navigator.geolocation) {
     gpsPos.textContent = "Acquiring Fix...";
@@ -195,326 +165,312 @@ function setupGeolocation() {
         coordinates.latitude = parseFloat(position.coords.latitude.toFixed(6));
         coordinates.longitude = parseFloat(position.coords.longitude.toFixed(6));
         gpsPos.innerHTML = `${coordinates.latitude}, ${coordinates.longitude}`;
+        evaluateSafeZoneDistance();
       },
       (error) => {
         console.warn("Using simulated coordinates:", error);
         gpsPos.innerHTML = `${coordinates.latitude} (Sim), ${coordinates.longitude} (Sim)`;
+        evaluateSafeZoneDistance();
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
   } else {
     gpsPos.innerHTML = `${coordinates.latitude} (Sim), ${coordinates.longitude} (Sim)`;
+    evaluateSafeZoneDistance();
+  }
+}
+
+// Distance calculation
+function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+function evaluateSafeZoneDistance() {
+  if (!medicalProfile || !medicalProfile.safeZone) return;
+  const sz = medicalProfile.safeZone;
+  const dist = calculateDistanceMeters(coordinates.latitude, coordinates.longitude, sz.latitude, sz.longitude);
+  safeZoneDistanceMeters = Math.round(dist);
+  const radius = sz.radiusMeters || 600;
+
+  isOutsideSafeZone = safeZoneDistanceMeters > radius;
+
+  if (safezoneText) {
+    if (isOutsideSafeZone) {
+      safezoneText.innerHTML = `⚠️ Outside Zone (${safeZoneDistanceMeters}m)`;
+      safezoneText.style.color = '#d9383a';
+      if (safezoneIcon) safezoneIcon.textContent = '⚠️';
+      if (diagSafezone) {
+        diagSafezone.textContent = `Breached (${safeZoneDistanceMeters}m from Center)`;
+        diagSafezone.style.color = '#d9383a';
+      }
+    } else {
+      safezoneText.innerHTML = `Inside Zone (${safeZoneDistanceMeters}m)`;
+      safezoneText.style.color = '#1b8552';
+      if (safezoneIcon) safezoneIcon.textContent = '🛡️';
+      if (diagSafezone) {
+        diagSafezone.textContent = `Normal (Within ${radius}m Perimeter)`;
+        diagSafezone.style.color = '#1b8552';
+      }
+    }
   }
 }
 
 // ==========================================
-// ACCELEROMETER SHAKE DETECTION
+// AUTOMATIC FALL DETECTION SENSOR
 // ==========================================
-let lastX, lastY, lastZ;
-let lastShakeTime = 0;
-let shakeCount = 0;
+function setupFallDetectionSensor() {
+  if (window.DeviceMotionEvent) {
+    let lastAccel = 0;
+    window.addEventListener('devicemotion', (event) => {
+      const acc = event.accelerationIncludingGravity;
+      if (!acc) return;
+      
+      const x = acc.x || 0;
+      const y = acc.y || 0;
+      const z = acc.z || 0;
+      const totalAccel = Math.sqrt(x*x + y*y + z*z);
+      const gForce = totalAccel / 9.81;
 
-function setupShakeDetection() {
-  if (!window.DeviceMotionEvent) return;
-
-  window.addEventListener('devicemotion', (event) => {
-    if (!shakeEnabled || systemMode === 'Alerting' || systemMode === 'Dispatched') return;
-
-    const acc = event.accelerationIncludingGravity || event.acceleration;
-    if (!acc) return;
-
-    const curTime = Date.now();
-    if ((curTime - lastShakeTime) > 100) {
-      const diffTime = curTime - lastShakeTime;
-      lastShakeTime = curTime;
-
-      const speed = Math.abs(acc.x + acc.y + acc.z - (lastX || 0) - (lastY || 0) - (lastZ || 0)) / diffTime * 10000;
-
-      if (speed > 2500) { // Threshold for vigorous shaking
-        shakeCount++;
-        if (shakeCount >= 2) {
-          shakeCount = 0;
-          console.log('[Sensor] Vigorous shake detected -> Triggering SOS Countdown!');
-          startSOSCountdown('shake');
-        }
-      } else {
-        shakeCount = Math.max(0, shakeCount - 0.2);
+      // Update live sensor reading
+      if (vitalsPageGforce && !vitals.fallDetected) {
+        vitalsPageGforce.textContent = gForce.toFixed(2);
       }
 
-      lastX = acc.x;
-      lastY = acc.y;
-      lastZ = acc.z;
+      // Detect sudden shock (impact spike > 26 m/s² or ~2.7G)
+      if (totalAccel > 26 && lastAccel < 15 && !vitals.fallDetected) {
+        console.warn(`[FALL SENSOR] Potential fall impact detected: ${gForce.toFixed(2)}G!`);
+        triggerFallDetectedEvent(gForce);
+      }
+      lastAccel = totalAccel;
+    });
+  }
+}
+
+function handleSimulateFall() {
+  triggerFallDetectedEvent(3.4);
+}
+
+function triggerFallDetectedEvent(gForce) {
+  vitals.fallDetected = true;
+  vitals.impactGForce = parseFloat(gForce.toFixed(2));
+  updateVitalsUI();
+
+  // Send instant telemetry to Azure IoT Hub
+  fetch('/api/azure/iot/fall-alert', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      impactGForce: vitals.impactGForce,
+      coordinates
+    })
+  }).catch(e => console.warn('Fall alert push failed:', e));
+
+  // Audio siren beep
+  playFallAlertBeeps();
+
+  // Start 10-second cancel window
+  startSOSCountdown('fall_detected', 10);
+}
+
+function playFallAlertBeeps() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    for (let i = 0; i < 4; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, ctx.currentTime + (i * 0.25));
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + (i * 0.25));
+      osc.start(ctx.currentTime + (i * 0.25));
+      osc.stop(ctx.currentTime + (i * 0.25) + 0.18);
+    }
+  } catch (e) {
+    console.warn('Audio beeps unavailable:', e);
+  }
+}
+
+// ==========================================
+// EMERGENCY VOICE MEMO RECORDER
+// ==========================================
+function setupVoiceMemoRecorder() {
+  if (!voiceRecordBtn) return;
+
+  voiceRecordBtn.addEventListener('click', async () => {
+    if (isRecordingVoice) {
+      stopVoiceRecording();
+    } else {
+      startVoiceRecording();
     }
   });
 }
 
-window.toggleShakeFeature = function(enabled) {
-  shakeEnabled = enabled;
-  if (enabled && typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-    DeviceMotionEvent.requestPermission().then(response => {
-      console.log('[iOS Permission] Shake motion permission:', response);
-    }).catch(console.error);
-  }
-};
-
-// ==========================================
-// SIMULATED FALL DETECTION
-// ==========================================
-window.simulateFallEvent = function() {
-  console.log('[Sensor] Simulating sudden drop/impact...');
-  startSOSCountdown('fall');
-};
-
-// ==========================================
-// SPEED DIAL RECORDER
-// ==========================================
-window.recordSpeedDial = function(serviceName) {
-  console.log(`[Speed Dial] Calling ${serviceName}`);
-  // Dispatch a lightweight ping to the backend logging speed dial use
-  fetch('/api/sos', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude,
-      senderName: `Elderly User (${serviceName})`,
-      batteryLevel: batteryLevel,
-      signalStrength: signalStrength,
-      latency: latency,
-      chosenChannel: 'Direct Cellular Voice',
-      triggerType: 'speed_dial',
-      isSimulated: true
-    })
-  }).catch(() => {});
-};
-
-// ==========================================
-// AUDIBLE BYSTANDER SIREN & FLASH STROBE
-// ==========================================
-window.toggleBystanderSiren = function() {
-  bystanderSirenActive = !bystanderSirenActive;
-  const btn = document.getElementById('btn-toggle-siren');
-  const btnText = document.getElementById('siren-btn-text');
-
-  if (bystanderSirenActive) {
-    document.body.classList.add('strobe-active');
-    btn.classList.add('active');
-    btnText.textContent = 'Stop Siren';
-    startSirenSound();
-  } else {
-    document.body.classList.remove('strobe-active');
-    btn.classList.remove('active');
-    btnText.textContent = 'Bystander Siren';
-    stopSirenSound();
-  }
-};
-
-function startSirenSound() {
+async function startVoiceRecording() {
   try {
-    if (!sirenAudioCtx) {
-      sirenAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if (sirenAudioCtx.state === 'suspended') {
-      sirenAudioCtx.resume();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) audioChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      if (voiceAudioPreview) {
+        voiceAudioPreview.src = audioUrl;
+        voiceAudioPreview.style.display = 'block';
+      }
+
+      // Convert to base64 Data URI
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        voiceMemoBase64 = reader.result;
+        if (voiceMemoStatus) {
+          voiceMemoStatus.textContent = 'Voice note recorded and attached to SOS! Click play to test.';
+          voiceMemoStatus.style.color = '#1b8552';
+        }
+      };
+      reader.readAsDataURL(audioBlob);
+
+      // Stop audio tracks
+      stream.getTracks().forEach(t => t.stop());
+    };
+
+    mediaRecorder.start();
+    isRecordingVoice = true;
+    voiceRecordBtn.classList.add('active');
+    if (micIcon) micIcon.textContent = '⏹️';
+    if (micText) micText.textContent = 'Stop Recording';
+    if (voiceMemoStatus) {
+      voiceMemoStatus.textContent = 'Recording distress message (Max 6s)...';
+      voiceMemoStatus.style.color = '#d9383a';
     }
 
-    const osc = sirenAudioCtx.createOscillator();
-    const gain = sirenAudioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.connect(gain);
-    gain.connect(sirenAudioCtx.destination);
+    // Auto stop after 6 seconds
+    setTimeout(() => {
+      if (isRecordingVoice) stopVoiceRecording();
+    }, 6000);
 
-    // Loud repeating siren frequency sweep
-    gain.gain.setValueAtTime(0.7, sirenAudioCtx.currentTime);
-    const now = sirenAudioCtx.currentTime;
-    for (let i = 0; i < 30; i++) {
-      osc.frequency.setValueAtTime(650, now + i * 0.5);
-      osc.frequency.linearRampToValueAtTime(1200, now + i * 0.5 + 0.25);
-      osc.frequency.linearRampToValueAtTime(650, now + i * 0.5 + 0.5);
-    }
-    osc.start();
-    sirenOscillator = osc;
+  } catch (err) {
+    console.warn('Microphone access denied or unsupported:', err);
+    alert('Microphone access is required to record distress voice memos.');
+  }
+}
+
+function stopVoiceRecording() {
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop();
+  }
+  isRecordingVoice = false;
+  voiceRecordBtn.classList.remove('active');
+  if (micIcon) micIcon.textContent = '🔴';
+  if (micText) micText.textContent = 'Re-record Voice';
+}
+
+// ==========================================
+// HEALTH VITALS & AZURE IOT TELEMETRY
+// ==========================================
+function fluctuateVitals() {
+  // Minor natural variation if normal
+  if (!vitals.fallDetected && vitals.heartRate < 120) {
+    vitals.heartRate = Math.round(72 + (Math.random() * 8 - 4));
+    vitals.skinTemp = parseFloat((36.7 + (Math.random() * 0.3 - 0.15)).toFixed(1));
+    vitals.bloodOxygen = Math.round(97 + Math.random() * 2);
+  }
+  updateVitalsUI();
+  pushAzureIoTTelemetry();
+}
+
+function updateVitalsUI() {
+  if (vitHr) vitHr.textContent = vitals.heartRate;
+  if (vitSpo2) vitSpo2.textContent = `${vitals.bloodOxygen}%`;
+  if (vitTemp) vitTemp.textContent = `${vitals.skinTemp}°C`;
+
+  if (vitalsPageHr) vitalsPageHr.textContent = vitals.heartRate;
+  if (vitalsPageSpo2) vitalsPageSpo2.textContent = vitals.bloodOxygen;
+  if (vitalsPageTemp) vitalsPageTemp.textContent = vitals.skinTemp;
+  if (vitalsPageGforce) vitalsPageGforce.textContent = vitals.impactGForce;
+}
+
+async function pushAzureIoTTelemetry() {
+  try {
+    await fetch('/api/azure/iot/telemetry', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...vitals,
+        battery: batteryLevel
+      })
+    });
   } catch (e) {
-    console.error('Audio siren error:', e);
+    // Offline or server down
   }
 }
 
-function stopSirenSound() {
-  try {
-    if (sirenOscillator) {
-      sirenOscillator.stop();
-      sirenOscillator.disconnect();
-      sirenOscillator = null;
-    }
-  } catch (e) {}
-}
-
 // ==========================================
-// MEDICAL PROFILE API CALLS & UI
+// MEDICAL PROFILE API
 // ==========================================
 async function fetchMedicalProfile() {
   try {
     const res = await fetch('/api/medical-profile');
     if (res.ok) {
       medicalProfile = await res.json();
-      renderMedicalProfile();
+      populateMedicalProfileUI(medicalProfile);
+      evaluateSafeZoneDistance();
     }
   } catch (e) {
-    console.error('Failed to load medical profile:', e);
+    console.warn('Failed to load medical profile:', e);
   }
 }
 
-function renderMedicalProfile() {
-  if (!medicalProfile) return;
-
-  if (medBloodBadge) medBloodBadge.textContent = `Blood: ${medicalProfile.bloodGroup || 'Unknown'}`;
-  if (medNameDisplay) medNameDisplay.textContent = medicalProfile.fullName || 'Registered Patient';
-  if (medSubDisplay) medSubDisplay.textContent = `Age: ${medicalProfile.age || '--'} • Insurance: ${medicalProfile.insuranceId || 'None'}`;
-
-  if (medConditionsBadges) {
-    const conds = medicalProfile.chronicConditions || [];
-    medConditionsBadges.innerHTML = conds.map(c => `<span class="medical-badge badge-cond">${c}</span>`).join('') || '<span style="font-size:11px; color:var(--text-sub);">None recorded</span>';
-  }
-
-  if (medAllergiesBadges) {
-    const algs = medicalProfile.allergies || [];
-    medAllergiesBadges.innerHTML = algs.map(a => `<span class="medical-badge badge-allergy">${a}</span>`).join('') || '<span style="font-size:11px; color:var(--text-sub);">None</span>';
-  }
-
-  if (medMedicationsList) {
-    const meds = medicalProfile.medications || [];
-    medMedicationsList.innerHTML = meds.map(m => `<div>• ${m}</div>`).join('') || '<div>None active</div>';
-  }
-
-  if (medNotesDisplay) {
-    medNotesDisplay.innerHTML = `<b>Doctor:</b> ${medicalProfile.primaryPhysician || 'None'}<br><b>Notes:</b> ${medicalProfile.emergencyNotes || 'None'}`;
-  }
-
-  // Pre-fill edit form
-  document.getElementById('input-med-name').value = medicalProfile.fullName || '';
-  document.getElementById('input-med-age').value = medicalProfile.age || '';
-  document.getElementById('input-med-blood').value = medicalProfile.bloodGroup || '';
-  document.getElementById('input-med-conds').value = (medicalProfile.chronicConditions || []).join(', ');
-  document.getElementById('input-med-allergies').value = (medicalProfile.allergies || []).join(', ');
-  document.getElementById('input-med-doctor').value = medicalProfile.primaryPhysician || '';
-  document.getElementById('input-med-notes').value = medicalProfile.emergencyNotes || '';
-}
-
-window.toggleMedicalEditor = function() {
-  if (!medicalEditForm) return;
-  medicalEditForm.style.display = medicalEditForm.style.display === 'none' ? 'block' : 'none';
-};
-
-window.saveMedicalProfile = async function(e) {
-  e.preventDefault();
-  const updated = {
-    fullName: document.getElementById('input-med-name').value.trim(),
-    age: parseInt(document.getElementById('input-med-age').value) || 70,
-    bloodGroup: document.getElementById('input-med-blood').value.trim(),
-    chronicConditions: document.getElementById('input-med-conds').value.split(',').map(s => s.trim()).filter(Boolean),
-    allergies: document.getElementById('input-med-allergies').value.split(',').map(s => s.trim()).filter(Boolean),
-    primaryPhysician: document.getElementById('input-med-doctor').value.trim(),
-    emergencyNotes: document.getElementById('input-med-notes').value.trim(),
-    medications: medicalProfile ? medicalProfile.medications : [],
-    insuranceId: medicalProfile ? medicalProfile.insuranceId : ''
+function populateMedicalProfileUI(profile) {
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val || 'Not specified';
   };
-
-  try {
-    const res = await fetch('/api/medical-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updated)
-    });
-    if (res.ok) {
-      medicalProfile = updated;
-      renderMedicalProfile();
-      toggleMedicalEditor();
-      alert('Medical ID Profile updated successfully!');
-    }
-  } catch (err) {
-    console.error('Error saving medical profile:', err);
-  }
-};
+  setVal('med-fullname', `${profile.fullName || 'Senior Resident'}, Age ${profile.age || 74}`);
+  setVal('med-blood', profile.bloodGroup ? `${profile.bloodGroup} Positive` : 'O+');
+  setVal('med-allergies', profile.allergies);
+  setVal('med-conditions', profile.conditions);
+  setVal('med-meds', profile.medications);
+  setVal('med-doctor', profile.emergencyDoctor);
+  setVal('med-hospital', profile.preferredHospital);
+}
 
 // ==========================================
-// CAREGIVER CONTACTS
+// CHANNEL SCORING & DECISION ENGINE
 // ==========================================
-async function fetchContactsList() {
-  try {
-    const res = await fetch('/api/contacts');
-    if (res.ok) {
-      contacts = await res.json();
-      renderContactsPWA();
-    }
-  } catch (error) {
-    pwaContactsContainer.innerHTML = `<p style="font-size:12px; color:#d9383a; text-align:center; padding:20px;">Could not connect to database.</p>`;
-  }
-}
-
-function renderContactsPWA() {
-  if (contacts.length === 0) {
-    pwaContactsContainer.innerHTML = `<p style="font-size:12px; color:var(--text-sub); text-align:center; padding:20px;">No emergency contacts added yet.</p>`;
-    return;
-  }
-
-  pwaContactsContainer.innerHTML = contacts.map(c => {
-    const initial = c.name ? c.name.charAt(0).toUpperCase() : '?';
-    return `
-      <div style="display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border-color); opacity:${c.active ? 1 : 0.55}">
-        <div style="width:34px; height:34px; border-radius:50%; background:var(--accent-red-light); color:var(--accent-red); font-weight:700; display:flex; align-items:center; justify-content:center;">${initial}</div>
-        <div style="flex:1;">
-          <div style="font-size:13px; font-weight:700;">${c.name}</div>
-          <div style="font-size:11px; color:var(--text-sub);">${c.relationship} • ${c.phone}</div>
-        </div>
-        <span class="sys-badge ${c.active ? 'ready' : 'sending'}" style="font-size:9px; padding:2px 8px;">
-          ${c.active ? 'Active' : 'Muted'}
-        </span>
-      </div>
-    `;
-  }).join('');
-}
-
-// Ping Server to check handshake connection
-async function pingServer() {
-  try {
-    const res = await fetch('/api/system-info');
-    if (res.ok) {
-      const data = await res.json();
-      serverStatus = 'Online';
-      diagHandshake.textContent = 'Connected (0.0.0.0)';
-      diagHandshake.style.color = '#1b8552';
-      diagSms.textContent = data.simulateSms ? 'Simulated logs' : 'Active Carrier (Twilio)';
-      diagSms.style.color = data.simulateSms ? '#c27803' : '#1b8552';
-    }
-  } catch (error) {
-    serverStatus = 'Offline';
-    diagHandshake.textContent = 'Server Unreachable';
-    diagHandshake.style.color = '#d9383a';
-  }
-}
-
-// Evaluate channels dynamically
 function evaluateChannels() {
-  signalStrength = Math.round(-65 - Math.random() * 40);
-  latency = Math.round(25 + Math.random() * 110);
-  
+  signalStrength = Math.round(-65 - Math.random() * 35);
+  latency = Math.round(25 + Math.random() * 90);
+
   if (diagSignal) diagSignal.textContent = `${signalStrength} dBm`;
   if (diagLatency) diagLatency.textContent = `${latency} ms`;
 
-  let cellSignalScore = Math.max(0, Math.min(100, ((signalStrength + 110) / 60) * 100));
-  let cellLatencyScore = Math.max(0, Math.min(100, ((300 - latency) / 280) * 100));
-  let cellSuccessRate = 94;
-  let cellScore = Math.round((cellSignalScore * WEIGHT_SIGNAL) + (cellLatencyScore * WEIGHT_LATENCY) + (batteryLevel * WEIGHT_BATTERY) + (cellSuccessRate * WEIGHT_SUCCESS));
+  const wSig = 0.30, wLat = 0.25, wBat = 0.20, wSucc = 0.25;
 
-  let smsSignalScore = Math.max(0, Math.min(100, ((signalStrength + 120) / 70) * 100));
-  let smsLatencyScore = 15;
-  let smsSuccessRate = 98;
-  let smsScore = Math.round((smsSignalScore * WEIGHT_SIGNAL) + (smsLatencyScore * WEIGHT_LATENCY) + (batteryLevel * WEIGHT_BATTERY) + (smsSuccessRate * WEIGHT_SUCCESS));
+  let cellSig = Math.max(0, Math.min(100, ((signalStrength + 110) / 60) * 100));
+  let cellLat = Math.max(0, Math.min(100, ((300 - latency) / 280) * 100));
+  let cellScore = Math.round((cellSig * wSig) + (cellLat * wLat) + (batteryLevel * wBat) + (95 * wSucc));
 
-  let meshSignalScore = 80;
-  let meshLatencyScore = 40;
-  let meshSuccessRate = 78;
-  let meshScore = Math.round((meshSignalScore * WEIGHT_SIGNAL) + (meshLatencyScore * WEIGHT_LATENCY) + (batteryLevel * WEIGHT_BATTERY) + (meshSuccessRate * WEIGHT_SUCCESS));
+  let smsSig = Math.max(0, Math.min(100, ((signalStrength + 120) / 70) * 100));
+  let smsScore = Math.round((smsSig * wSig) + (15 * wLat) + (batteryLevel * wBat) + (98 * wSucc));
+
+  let meshScore = Math.round((80 * wSig) + (40 * wLat) + (batteryLevel * wBat) + (78 * wSucc));
 
   updateBar(barCell, valCell, cellScore);
   updateBar(barSms, valSms, smsScore);
@@ -523,9 +479,9 @@ function evaluateChannels() {
   if (cellScore >= smsScore && cellScore >= meshScore) {
     currentScoreChannel = 'Cellular Data';
   } else if (smsScore >= cellScore && smsScore >= meshScore) {
-    currentScoreChannel = 'SMS Gateway';
+    currentScoreChannel = 'SMS Gateway (Azure/Twilio)';
   } else {
-    currentScoreChannel = 'LoRa Mesh';
+    currentScoreChannel = 'LoRa Mesh Network';
   }
 }
 
@@ -535,52 +491,71 @@ function updateBar(barEl, valEl, score) {
 }
 
 // ==========================================
+// SERVER PING & HANDSHAKE
+// ==========================================
+async function pingServer() {
+  try {
+    const res = await fetch('/api/system-info');
+    if (res.ok) {
+      const data = await res.json();
+      serverStatus = 'Online';
+      if (diagHandshake) {
+        diagHandshake.textContent = 'Connected (0.0.0.0)';
+        diagHandshake.style.color = '#1b8552';
+      }
+
+      if (azureStatusPill) {
+        if (data.hasAzureAcs || data.hasAzureStorage) {
+          azureStatusPill.textContent = '☁️ Azure Connected';
+          azureStatusPill.style.background = '#eef7ff';
+          azureStatusPill.style.color = '#0078d4';
+        } else {
+          azureStatusPill.textContent = '☁️ Azure Ready';
+        }
+      }
+
+      if (diagAzureAcs) {
+        diagAzureAcs.textContent = data.hasAzureAcs ? 'Active ACS Primary' : 'Simulated / Standby';
+        diagAzureAcs.style.color = data.hasAzureAcs ? '#0078d4' : '#5e5d56';
+      }
+    }
+  } catch (err) {
+    serverStatus = 'Offline';
+    if (diagHandshake) {
+      diagHandshake.textContent = 'Server Unreachable';
+      diagHandshake.style.color = '#d9383a';
+    }
+  }
+}
+
+// ==========================================
 // SOS COUNTDOWN & DISPATCH
 // ==========================================
-function startSOSCountdown(mode = 'manual') {
-  currentTriggerMode = mode;
-  systemMode = 'Alerting';
-  
-  const badge = document.getElementById('sys-mode-badge');
-  if (badge) {
-    badge.className = 'sys-badge ready';
-    badge.style.background = '#fff1f0';
-    badge.style.color = '#cf1322';
-    badge.textContent = 'Countdown (5s)';
+function startSOSCountdown(triggerType = 'manual_sos', durationSeconds = 5) {
+  currentTriggerType = triggerType;
+  sysModeBadge.className = 'sys-badge ready';
+  sysModeBadge.style.background = '#fef3c7';
+  sysModeBadge.style.color = '#854d0e';
+  sysModeBadge.style.border = '1px solid #f59e0b';
+  sysModeBadge.textContent = 'Alerting';
+
+  if (countdownTitle) {
+    countdownTitle.textContent = triggerType === 'fall_detected' ? '⚠️ FALL DETECTED!' : '🚨 SOS ALERT INITIATED';
+  }
+  if (countdownTriggerType) {
+    countdownTriggerType.textContent = triggerType === 'fall_detected' ?
+      `Impact Shock: ${vitals.impactGForce}G detected` : 'Manual Single-Touch Distress';
   }
 
-  const titleEl = document.getElementById('countdown-title');
-  const subEl = document.getElementById('countdown-sub');
-  if (mode === 'fall') {
-    if (titleEl) titleEl.textContent = '💥 FALL DETECTED!';
-    if (subEl) subEl.textContent = 'Impact threshold exceeded. Initiating emergency rescue alert in...';
-  } else if (mode === 'shake') {
-    if (titleEl) titleEl.textContent = '📳 SHAKE TRIGGER DETECTED!';
-    if (subEl) subEl.textContent = 'Rapid gesture registered. Dispatching emergency alert in...';
-  } else {
-    if (titleEl) titleEl.textContent = '🚨 SOS BUTTON PRESSED';
-    if (subEl) subEl.textContent = 'Dispatching distress signal and Medical ID to caregivers in...';
-  }
-  
-  let count = 5;
-  const numEl = document.getElementById('pwa-countdown-num');
-  const overlayEl = document.getElementById('pwa-countdown-overlay');
-  const btnMain = document.getElementById('sos-btn-main-text');
+  let count = durationSeconds;
+  pwaCountdownNum.textContent = count;
+  pwaCountdownOverlay.classList.add('active');
 
-  if (numEl) numEl.textContent = count;
-  if (btnMain) btnMain.textContent = '🚨 ' + count;
-  if (overlayEl) {
-    overlayEl.classList.add('active');
-    overlayEl.style.display = 'flex';
-  }
-  
   clearInterval(countdownInterval);
   countdownInterval = setInterval(() => {
     count--;
     if (count > 0) {
-      if (numEl) numEl.textContent = count;
-      if (btnMain) btnMain.textContent = '🚨 ' + count;
-      if (badge) badge.textContent = `Countdown (${count}s)`;
+      pwaCountdownNum.textContent = count;
     } else {
       clearInterval(countdownInterval);
       dispatchPWASOS();
@@ -590,59 +565,55 @@ function startSOSCountdown(mode = 'manual') {
 
 function cancelSOSCountdown() {
   clearInterval(countdownInterval);
-  
-  const overlayEl = document.getElementById('pwa-countdown-overlay');
-  if (overlayEl) {
-    overlayEl.classList.remove('active');
-    overlayEl.style.display = 'none';
-  }
-  
-  const btnMain = document.getElementById('sos-btn-main-text');
-  if (btnMain) btnMain.textContent = 'SOS';
-
-  systemMode = 'Ready';
-  const badge = document.getElementById('sys-mode-badge');
-  if (badge) {
-    badge.className = 'sys-badge ready';
-    badge.style.background = 'var(--accent-red-light)';
-    badge.style.color = 'var(--accent-red)';
-    badge.textContent = 'Ready';
-  }
-
-  // Stop breadcrumb live updates if canceled
-  if (breadcrumbInterval) {
-    clearInterval(breadcrumbInterval);
-    breadcrumbInterval = null;
-  }
+  pwaCountdownOverlay.classList.remove('active');
+  vitals.fallDetected = false;
+  sysModeBadge.className = 'sys-badge ready';
+  sysModeBadge.style.background = 'var(--accent-yellow-light)';
+  sysModeBadge.style.color = 'var(--accent-yellow-text)';
+  sysModeBadge.style.border = '1px solid var(--accent-yellow-border)';
+  sysModeBadge.textContent = 'Ready';
 }
 
-// Expose globally for HTML onclick handlers
-window.startSOSCountdown = startSOSCountdown;
-window.cancelSOSCountdown = cancelSOSCountdown;
+// Force high-accuracy GPS fix at the exact moment of distress trigger
+async function acquireFreshCoordinates() {
+  if (!navigator.geolocation) return coordinates;
+  return new Promise((resolve) => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        coordinates.latitude = parseFloat(pos.coords.latitude.toFixed(6));
+        coordinates.longitude = parseFloat(pos.coords.longitude.toFixed(6));
+        if (gpsPos) gpsPos.innerHTML = `${coordinates.latitude}, ${coordinates.longitude}`;
+        evaluateSafeZoneDistance();
+        resolve(coordinates);
+      },
+      (err) => {
+        console.warn('Live GPS acquisition warning, utilizing cached coordinate fix:', err.message);
+        resolve(coordinates);
+      },
+      { enableHighAccuracy: true, timeout: 3500, maximumAge: 0 }
+    );
+  });
+}
 
-// Send SOS REST trigger & activate Live Breadcrumb transmission
 async function dispatchPWASOS() {
-  const overlayEl = document.getElementById('pwa-countdown-overlay');
-  if (overlayEl) {
-    overlayEl.classList.remove('active');
-    overlayEl.style.display = 'none';
-  }
+  pwaCountdownOverlay.classList.remove('active');
+  sysModeBadge.textContent = 'Acquiring GPS & Dispatching...';
 
-  const btnMain = document.getElementById('sos-btn-main-text');
-  if (btnMain) btnMain.textContent = 'SENT';
+  // Acquire fresh live hardware GPS fix
+  await acquireFreshCoordinates();
 
-  const badge = document.getElementById('sys-mode-badge');
-  if (badge) badge.textContent = 'Sending...';
-  
   const payload = {
     latitude: coordinates.latitude,
     longitude: coordinates.longitude,
-    senderName: medicalProfile && medicalProfile.fullName ? medicalProfile.fullName : "Elderly User (Mobile PWA)",
+    senderName: medicalProfile ? medicalProfile.fullName : "Senior Resident",
     batteryLevel: batteryLevel,
     signalStrength: signalStrength,
     latency: latency,
     chosenChannel: currentScoreChannel,
-    triggerType: currentTriggerMode,
+    triggerType: currentTriggerType,
+    vitalSigns: vitals,
+    voiceMemoBase64: voiceMemoBase64,
+    isOutsideSafeZone: isOutsideSafeZone,
     isSimulated: false
   };
 
@@ -655,48 +626,59 @@ async function dispatchPWASOS() {
 
     if (res.ok) {
       const data = await res.json();
-      systemMode = 'Dispatched';
       sysModeBadge.className = 'sys-badge sent';
       sysModeBadge.style.background = '#e6f7ff';
       sysModeBadge.style.color = '#1890ff';
       sysModeBadge.textContent = 'Dispatched';
 
-      activeAlertId = data.alert.id;
-      startBreadcrumbTransmitter(activeAlertId);
+      const triage = data.triage || {};
+      const gMapsUrl = `https://maps.google.com/?q=${coordinates.latitude},${coordinates.longitude}`;
 
-      alert(`Distress Alert Sent Successfully!\nMode: ${currentTriggerMode.toUpperCase()}\nPathway: ${payload.chosenChannel}\nLive tracking breadcrumbs active.`);
+      // Open a custom modal or alert with the Google Maps link
+      showDistressSuccessDialog(data, gMapsUrl);
     } else {
-      throw new Error('Server returned error');
+      const err = await res.json();
+      throw new Error(err.error || 'Server error');
     }
   } catch (error) {
-    console.warn("Network failed -> Queueing in offline storage", error);
-    const queue = JSON.parse(localStorage.getItem('imecs_offline_queue') || '[]');
-    queue.push(payload);
-    localStorage.setItem('imecs_offline_queue', JSON.stringify(queue));
-    updateOfflineQueueUI();
-
-    systemMode = 'Queued';
-    sysModeBadge.className = 'sys-badge offline';
-    sysModeBadge.textContent = 'Queued Offline';
-    alert(`Alert Queued in Offline Storage!\nNetwork is unavailable. The distress signal will be dispatched automatically as soon as connectivity resumes.`);
+    console.error("Alert failed:", error);
+    sysModeBadge.className = 'sys-badge ready';
+    sysModeBadge.style.background = 'var(--accent-yellow-light)';
+    sysModeBadge.style.color = 'var(--accent-yellow-text)';
+    sysModeBadge.style.border = '1px solid var(--accent-yellow-border)';
+    sysModeBadge.textContent = 'Ready';
+    alert(`Alert Transmission Error: ${error.message}`);
   }
 }
 
-// Periodic Breadcrumb Transmitter
-function startBreadcrumbTransmitter(alertId) {
-  if (breadcrumbInterval) clearInterval(breadcrumbInterval);
+function showDistressSuccessDialog(data, gMapsUrl) {
+  const modal = document.createElement('div');
+  modal.className = 'custom-modal-backdrop active';
+  modal.style.zIndex = '9999';
+  modal.innerHTML = `
+    <div class="custom-modal-card" style="text-align:center; padding:24px; border:2px solid #eab308; box-shadow:0 12px 32px rgba(234,179,8,0.25);">
+      <div style="font-size:42px; margin-bottom:8px;">⚠️</div>
+      <h2 style="font-size:18px; color:#854d0e; font-weight:800; margin-bottom:6px;">EMERGENCY DISTRESS DISPATCHED!</h2>
+      <p style="font-size:12px; color:var(--text-sub); margin-bottom:14px;">
+        Your live GPS location and clinical telemetry have been sent to your caregivers.
+      </p>
 
-  breadcrumbInterval = setInterval(() => {
-    // Transmit slight movement variation to demonstrate real-time movement trajectory
-    const latDelta = (Math.random() - 0.5) * 0.0004;
-    const lngDelta = (Math.random() - 0.5) * 0.0004;
-    const liveLat = parseFloat((coordinates.latitude + latDelta).toFixed(6));
-    const liveLng = parseFloat((coordinates.longitude + lngDelta).toFixed(6));
+      <div style="background:var(--bg-app); border:1px solid var(--border-color); border-radius:12px; padding:12px; margin-bottom:16px; text-align:left; font-size:11px;">
+        <div><b>📍 Live GPS Coordinates:</b> <span style="font-family:monospace; font-weight:700;">${data.alert.latitude}, ${data.alert.longitude}</span></div>
+        <div style="margin-top:4px;"><b>📱 Contacts Notified:</b> ${data.alert.contactsNotifiedCount} Caregivers</div>
+        <div style="margin-top:4px;"><b>☁️ Gateway:</b> ${data.gateway}</div>
+        <div style="margin-top:4px;"><b>🤖 Azure AI Triage:</b> Level <span style="color:#b45309; font-weight:800;">${data.triage ? data.triage.triageLevel : 'EVALUATED'}</span></div>
+      </div>
 
-    fetch(`/api/sos/${alertId}/breadcrumb`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ latitude: liveLat, longitude: liveLng })
-    }).catch(err => console.log('[Breadcrumb] Error sending live point:', err));
-  }, 10000);
+      <div style="display:flex; flex-direction:column; gap:8px;">
+        <a href="${gMapsUrl}" target="_blank" rel="noopener noreferrer" class="btn" style="background:#ffd000; color:#18181b; border:1px solid #eab308; padding:10px; font-size:12px; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; border-radius:8px; font-weight:800; box-shadow:0 2px 8px rgba(234,179,8,0.35);">
+          📍 Open My Live Location in Google Maps &nearr;
+        </a>
+        <button class="btn btn-sm" onclick="this.closest('.custom-modal-backdrop').remove()" style="padding:8px; font-size:11px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:8px;">
+          Close & Return to App
+        </button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
 }

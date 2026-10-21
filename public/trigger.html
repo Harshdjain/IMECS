@@ -3,44 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>IMECS SOS — Smart Emergency System</title>
+  <title>IMECS SOS — Emergency Responder Link</title>
   
   <!-- PWA Metadata -->
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon.svg">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#d9383a">
+  <meta name="theme-color" content="#ffd000">
+  <meta name="color-scheme" content="light">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --bg-app: #f4f3ef;
-      --bg-card: rgba(255, 255, 255, 0.9);
-      --text-main: #1d1c1a;
-      --text-sub: #6e6d68;
-      --accent-red: #d9383a;
-      --accent-red-light: rgba(217, 56, 58, 0.08);
-      --accent-blue: #1b60b8;
-      --accent-green: #1b8552;
+      color-scheme: light;
+      --bg-app: #f7f6f2;
+      --bg-card: rgba(255, 255, 255, 0.95);
+      --text-main: #18181b;
+      --text-sub: #52525b;
+      --accent-yellow: #ffd000;
+      --accent-yellow-bright: #ffcc00;
+      --accent-yellow-light: rgba(255, 208, 0, 0.22);
+      --accent-yellow-border: #eab308;
+      --accent-yellow-text: #854d0e;
+      --accent-red: #ffd000;
+      --accent-red-light: rgba(255, 208, 0, 0.22);
+      --color-azure: #0078d4;
+      --color-azure-bg: #eef7ff;
       --border-color: rgba(0, 0, 0, 0.08);
       --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-app: #121211;
-        --bg-card: rgba(26, 26, 25, 0.9);
-        --text-main: #f0ede6;
-        --text-sub: #a3a199;
-        --accent-red: #ff5255;
-        --accent-red-light: rgba(255, 82, 85, 0.14);
-        --border-color: rgba(255, 255, 255, 0.08);
-      }
     }
     
     * {
@@ -60,16 +55,6 @@
       flex-direction: column;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
-      transition: background 0.1s;
-    }
-
-    body.strobe-active {
-      animation: emergency-strobe 0.25s infinite alternate !important;
-    }
-
-    @keyframes emergency-strobe {
-      from { background-color: #ff0000; }
-      to { background-color: #ffffff; }
     }
     
     /* Native App Top Bar */
@@ -92,22 +77,37 @@
     }
     
     .app-logo {
-      width: 30px;
-      height: 30px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
-      background: var(--accent-red);
+      background: #ffd000;
+      border: 1px solid #eab308;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: white;
+      color: #18181b;
       font-weight: 800;
       font-size: 15px;
+      box-shadow: 0 2px 6px rgba(234, 179, 8, 0.35);
     }
     
     .app-title-group h1 {
       font-size: 15px;
       font-weight: 800;
       letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+    
+    .azure-cloud-tag {
+      font-size: 9px;
+      background: var(--color-azure-bg);
+      color: var(--color-azure);
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
     }
     
     .sys-badge {
@@ -118,10 +118,13 @@
       text-transform: uppercase;
       letter-spacing: 0.02em;
     }
-    .sys-badge.ready { background: var(--accent-red-light); color: var(--accent-red); }
+    .sys-badge.ready {
+      background: var(--accent-yellow-light);
+      color: var(--accent-yellow-text);
+      border: 1px solid rgba(234, 179, 8, 0.45);
+    }
     .sys-badge.sending { background: #fffbe6; color: #d46b08; }
     .sys-badge.sent { background: #e6f7ff; color: #1890ff; }
-    .sys-badge.offline { background: #fff2e8; color: #fa541c; }
     
     /* Main Screen Navigation Views */
     .screen-views {
@@ -141,7 +144,7 @@
     }
     
     @keyframes fade-in {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
@@ -150,7 +153,7 @@
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 16px;
-      padding: 14px 16px;
+      padding: 14px;
       margin-bottom: 12px;
       backdrop-filter: blur(10px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.02);
@@ -175,14 +178,14 @@
       width: 36px;
       height: 36px;
       border-radius: 10px;
-      background: rgba(0,0,0,0.04);
+      background: rgba(0,0,0,0.03);
       display: flex;
       align-items: center;
       justify-content: center;
     }
     
     .status-label {
-      font-size: 9px;
+      font-size: 10px;
       color: var(--text-sub);
       text-transform: uppercase;
       font-weight: 700;
@@ -192,78 +195,85 @@
       font-size: 12px;
       font-weight: 700;
     }
-
-    /* Speed-Dial Emergency Buttons */
-    .speed-dial-bar {
+    
+    /* Vitals Mini Banner */
+    .vitals-bar {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 12px;
     }
-
-    .speed-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 4px;
+    .vital-chip {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 12px;
+      padding: 8px;
+      text-align: center;
+    }
+    .vital-chip .v-val {
+      font-size: 14px;
+      font-weight: 800;
       color: var(--text-main);
-      text-decoration: none;
-      font-size: 10px;
+    }
+    .vital-chip .v-lbl {
+      font-size: 9px;
+      color: var(--text-sub);
+      text-transform: uppercase;
       font-weight: 700;
-      gap: 3px;
-      transition: all 0.15s;
     }
-
-    .speed-btn:active {
-      transform: scale(0.96);
-      background: var(--accent-red-light);
-      border-color: var(--accent-red);
+    
+    .pulsing-heart {
+      animation: heart-beat 1.2s infinite ease-in-out;
+      display: inline-block;
     }
-
-    .speed-btn.primary {
-      background: var(--accent-red-light);
-      border-color: var(--accent-red);
-      color: var(--accent-red);
+    @keyframes heart-beat {
+      0% { transform: scale(1); }
+      14% { transform: scale(1.25); }
+      28% { transform: scale(1); }
+      42% { transform: scale(1.25); }
+      70% { transform: scale(1); }
     }
-
+    
     /* SOS Emergency Tap Button */
     .sos-view-wrapper {
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      margin: 14px 0;
+      margin: 10px 0 16px 0;
     }
     
     .sos-app-btn {
-      width: 175px;
-      height: 175px;
+      width: 180px;
+      height: 180px;
       border-radius: 50%;
-      background: var(--accent-red);
+      background: radial-gradient(circle at 35% 35%, #fff59d, #ffd000 65%, #f59e0b 100%);
       border: 8px solid var(--bg-card);
-      color: white;
-      font-size: 34px;
-      font-weight: 800;
+      color: #18181b;
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
       cursor: pointer;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 16px 36px rgba(217, 56, 58, 0.35);
+      box-shadow: 0 16px 36px rgba(234, 179, 8, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.6);
       position: relative;
-      transition: transform 0.1s;
+      transition: transform 0.1s, box-shadow 0.2s;
     }
     
+    .sos-app-btn span {
+      color: #18181b;
+      font-weight: 900;
+    }
+
     .sos-app-btn::after {
       content: '';
       position: absolute;
-      top: -8px; left: -8px; right: -8px; bottom: -8px;
+      top: -9px; left: -9px; right: -9px; bottom: -9px;
       border-radius: 50%;
-      border: 1px solid var(--accent-red);
+      border: 2px solid #eab308;
       animation: pulse-ring 2s infinite;
     }
     
@@ -272,7 +282,7 @@
     }
     
     @keyframes pulse-ring {
-      0% { transform: scale(0.98); opacity: 0.8; }
+      0% { transform: scale(0.98); opacity: 0.9; }
       100% { transform: scale(1.35); opacity: 0; }
     }
     
@@ -284,37 +294,66 @@
       margin-top: 12px;
       max-width: 260px;
     }
-
-    /* Emergency Actions Row */
-    .emergency-actions-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .action-toggle-btn {
+    
+    /* Fall Detection Banner & Action */
+    .fall-banner {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px;
-      font-size: 11px;
-      font-weight: 700;
+      justify-content: space-between;
+      background: rgba(255, 208, 0, 0.15);
+      border: 1px dashed #eab308;
       border-radius: 12px;
-      border: 1px solid var(--border-color);
-      background: var(--bg-card);
-      color: var(--text-main);
+      padding: 10px 14px;
+      margin-bottom: 12px;
+    }
+    .fall-banner-btn {
+      background: #ffd000;
+      color: #18181b;
+      border: 1px solid #eab308;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
       cursor: pointer;
-      transition: all 0.15s;
+      box-shadow: 0 1px 4px rgba(234, 179, 8, 0.35);
     }
-
-    .action-toggle-btn.active {
-      background: var(--accent-red);
-      color: white;
-      border-color: var(--accent-red);
+    
+    /* Voice Memo Recording Box */
+    .voice-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
     }
-
+    .voice-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .mic-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-app);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mic-btn.active {
+      background: #ffd000;
+      color: #18181b;
+      border-color: #eab308;
+      box-shadow: 0 0 16px rgba(255, 208, 0, 0.65);
+      animation: pulse-ring 1.5s infinite;
+    }
+    
     /* Decision Score visual list */
     .decision-row {
       display: flex;
@@ -329,7 +368,7 @@
       height: 6px;
       background: rgba(0,0,0,0.05);
       border-radius: 3px;
-      margin: 0 14px;
+      margin: 0 12px;
       overflow: hidden;
     }
     
@@ -365,75 +404,60 @@
     }
     
     .tab-item.active {
-      color: var(--accent-red);
+      color: #a16207;
+      font-weight: 800;
+    }
+    
+    .tab-item.active .tab-icon {
+      filter: drop-shadow(0 2px 4px rgba(234, 179, 8, 0.45));
     }
     
     .tab-icon {
       font-size: 18px;
     }
-
-    /* Medical Profile Badges & Fields */
-    .medical-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 700;
-      margin-right: 6px;
-      margin-bottom: 6px;
-    }
-    .badge-blood { background: #fee2e2; color: #991b1b; }
-    .badge-cond { background: #fef3c7; color: #92400e; }
-    .badge-allergy { background: #fce7f3; color: #9d174d; }
-
-    .form-label {
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--text-sub);
-      margin-bottom: 4px;
-      display: block;
-      text-transform: uppercase;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 8px 12px;
+    
+    /* Medical Card List Item */
+    .med-item {
+      display: flex;
+      flex-direction: column;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-color);
       font-size: 12px;
-      font-family: inherit;
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      background: var(--bg-app);
-      color: var(--text-main);
-      margin-bottom: 10px;
     }
-
+    .med-item:last-child { border-bottom: none; }
+    .med-lbl {
+      font-size: 10px;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .med-val {
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    
     /* Countdown Screen overlay */
     .app-countdown-overlay {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: #d9383a;
-      color: #ffffff;
-      z-index: 999999;
+      background: #ffd000;
+      color: #18181b;
+      z-index: 999;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px;
-      text-align: center;
-      box-shadow: inset 0 0 100px rgba(0,0,0,0.3);
+      padding: 30px;
     }
     .app-countdown-overlay.active {
-      display: flex !important;
+      display: flex;
     }
     
     .num-big {
-      font-size: 140px;
-      line-height: 1;
-      font-weight: 800;
-      color: #ffffff;
-      text-shadow: 0 4px 30px rgba(0,0,0,0.35);
+      font-size: 130px;
+      font-weight: 900;
+      color: #18181b;
       animation: shrink-grow 1s infinite alternate;
-      margin: 20px 0;
     }
     
     @keyframes shrink-grow {
@@ -442,20 +466,16 @@
     }
     
     .btn-stop {
-      margin-top: 24px;
-      background: white;
-      color: #d9383a;
-      border: none;
-      padding: 14px 40px;
+      margin-top: 40px;
+      background: #18181b;
+      color: #ffd000;
+      border: 2px solid #18181b;
+      padding: 16px 40px;
       font-size: 16px;
       font-weight: 800;
       border-radius: 30px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.25);
       cursor: pointer;
-      transition: transform 0.1s;
-    }
-    .btn-stop:active {
-      transform: scale(0.95);
     }
   </style>
 </head>
@@ -465,39 +485,39 @@
     <div class="app-title-group">
       <div class="app-logo">🚨</div>
       <div>
-        <h1>IMECS SOS</h1>
-        <p style="font-size:9px; color:var(--text-sub); font-weight:700;">Multi-Layer Emergency System</p>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <h1>IMECS SOS</h1>
+          <span class="azure-cloud-tag" id="azure-status-pill">☁️ Azure Ready</span>
+        </div>
+        <p style="font-size:9px; color:var(--text-sub); font-weight:700;">Intelligent Emergency Link</p>
       </div>
     </div>
-    <div style="display:flex; align-items:center; gap:6px;">
-      <span class="sys-badge ready" id="sys-mode-badge">Ready</span>
-      <span class="sys-badge" id="offline-badge" style="display:none; background:#ff4d4f; color:#fff;">Offline</span>
-    </div>
+    <span class="sys-badge ready" id="sys-mode-badge">Ready</span>
   </header>
 
   <!-- Navigation Views -->
   <div class="screen-views">
     
-    <!-- View 1: SOS Trigger View -->
+    <!-- View 1: Main SOS View -->
     <div class="view-panel active" id="view-sos">
-
-      <!-- Speed Dial Bar -->
-      <div class="speed-dial-bar">
-        <a href="tel:112" class="speed-btn primary" onclick="recordSpeedDial('112 Emergency')">
-          <span style="font-size:14px;">📞</span>
-          <span>112 All SOS</span>
-        </a>
-        <a href="tel:108" class="speed-btn" onclick="recordSpeedDial('108 Ambulance')">
-          <span style="font-size:14px;">🚑</span>
-          <span>108 Med</span>
-        </a>
-        <a href="tel:100" class="speed-btn" onclick="recordSpeedDial('100 Police')">
-          <span style="font-size:14px;">👮</span>
-          <span>100 Police</span>
-        </a>
+      
+      <!-- Live Vitals Quick Strip (Azure IoT Connected) -->
+      <div class="vitals-bar">
+        <div class="vital-chip">
+          <div class="v-val"><span class="pulsing-heart">❤️</span> <span id="vit-hr">76</span></div>
+          <div class="v-lbl">Heart Rate BPM</div>
+        </div>
+        <div class="vital-chip">
+          <div class="v-val">🫁 <span id="vit-spo2">98%</span></div>
+          <div class="v-lbl">Oxygen SpO2</div>
+        </div>
+        <div class="vital-chip">
+          <div class="v-val">🌡️ <span id="vit-temp">36.8°C</span></div>
+          <div class="v-lbl">Body Temp</div>
+        </div>
       </div>
 
-      <!-- Quick Telemetry Row -->
+      <!-- Quick Status Row (GPS + Safe Zone) -->
       <div class="status-row">
         <div class="app-card status-item" style="margin-bottom:0;">
           <div class="status-icon">📍</div>
@@ -507,189 +527,182 @@
           </div>
         </div>
         <div class="app-card status-item" style="margin-bottom:0;">
-          <div class="status-icon">🔋</div>
+          <div class="status-icon" id="safezone-icon">🛡️</div>
           <div>
-            <div class="status-label">Battery Level</div>
-            <div class="status-value" id="batt-lev">--%</div>
+            <div class="status-label">Safe Zone Perimeter</div>
+            <div class="status-value" id="safezone-text" style="color:#1b8552;">Inside Zone (45m)</div>
           </div>
         </div>
       </div>
-      
-      <!-- Big Emergency Trigger Button -->
+
+      <!-- Fall Detection Instant Trigger Banner -->
+      <div class="fall-banner">
+        <div>
+          <div style="font-size:12px; font-weight:800; color:#854d0e; display:flex; align-items:center; gap:4px;">
+            <span>⚠️</span> <span>Fall Detection Sensor</span>
+          </div>
+          <div style="font-size:10px; color:var(--text-sub);">Monitors 3D accelerometer & impacts</div>
+        </div>
+        <button class="fall-banner-btn" id="simulate-fall-btn">Test Fall</button>
+      </div>
+
+      <!-- Center SOS Big Button -->
       <div class="sos-view-wrapper">
-        <button class="sos-app-btn" id="trigger-sos-btn" onclick="startSOSCountdown('manual')">
-          <span id="sos-btn-main-text">SOS</span>
-          <span style="font-size:9px; font-weight:normal; letter-spacing:1px; margin-top:2px;" id="sos-btn-sub-text">PRESS FOR HELP</span>
+        <button class="sos-app-btn" id="trigger-sos-btn">
+          <span>SOS</span>
+          <span style="font-size:9px; font-weight:normal; letter-spacing:1px; margin-top:2px;">PRESS FOR HELP</span>
         </button>
         <p class="sos-label-info">
-          Transmits distress signal, GPS location, and Medical ID to pre-registered caregivers.
+          Will dispatch distress alert to caregivers with GPS, vitals, and Azure AI Triage.
         </p>
       </div>
 
-      <!-- Emergency Sensor & Bystander Actions -->
-      <div class="emergency-actions-row">
-        <button class="action-toggle-btn" id="btn-toggle-siren" onclick="toggleBystanderSiren()">
-          <span>📢</span>
-          <span id="siren-btn-text">Bystander Siren</span>
-        </button>
-        <button class="action-toggle-btn" id="btn-sim-fall" onclick="simulateFallEvent()">
-          <span>💥</span>
-          <span>Simulate Fall</span>
-        </button>
+      <!-- Voice Memo Audio Box -->
+      <div class="voice-box">
+        <div class="voice-row">
+          <div>
+            <div style="font-size:12px; font-weight:700;">🎙️ Emergency Voice Memo</div>
+            <div style="font-size:10px; color:var(--text-sub);" id="voice-memo-status">Record a 5-sec voice message with your SOS</div>
+          </div>
+          <button class="mic-btn" id="voice-record-btn">
+            <span id="mic-icon">🔴</span> <span id="mic-text">Record Voice</span>
+          </button>
+        </div>
+        <audio id="voice-audio-preview" controls style="display:none; width:100%; height:32px; margin-top:8px;"></audio>
       </div>
 
-      <!-- Adaptive Decision Engine Card -->
+      <!-- IMECS Adaptive Routing Scores -->
       <div class="app-card" style="margin-bottom:0;">
-        <h4 style="font-size:11px; text-transform:uppercase; color:var(--text-sub); margin-bottom:10px; font-weight:700;">Adaptive Pathway Scoring (IMECS)</h4>
+        <h4 style="font-size:11px; text-transform:uppercase; color:var(--text-sub); margin-bottom:10px; font-weight:700;">
+          Adaptive Decisions (IMECS Channel Optimization)
+        </h4>
         <div class="decision-row">
           <span>Cellular Data</span>
           <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-cell" style="background:#3B8BD4;"></div></div>
           <span style="font-family:monospace; font-weight:700;" id="val-cell">0</span>
         </div>
         <div class="decision-row">
-          <span>SMS Gateway</span>
+          <span>SMS Carrier Gateway</span>
           <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-sms" style="background:#9F3FBF;"></div></div>
           <span style="font-family:monospace; font-weight:700;" id="val-sms">0</span>
         </div>
         <div class="decision-row" style="margin-bottom:0;">
-          <span>LoRa Mesh</span>
+          <span>LoRa Mesh Network</span>
           <div class="decision-bar-bg"><div class="decision-bar-fill" id="bar-mesh" style="background:#1D9E75;"></div></div>
           <span style="font-family:monospace; font-weight:700;" id="val-mesh">0</span>
         </div>
       </div>
     </div>
     
-    <!-- View 2: Medical Emergency Profile View -->
+    <!-- View 2: Azure IoT Wearables & Vitals View -->
+    <div class="view-panel" id="view-vitals">
+      <div class="app-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub);">Azure IoT Hub Wearable Twin</h4>
+          <span class="badge-azure" style="font-size:9px; padding:2px 8px; border-radius:10px;">Connected</span>
+        </div>
+        <p style="font-size:11px; color:var(--text-sub); margin-bottom:12px;">
+          Live telemetry streamed from wearable device / smartphone motion sensors into Microsoft Azure IoT Hub.
+        </p>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px;">
+          <div style="background:var(--bg-app); padding:10px; border-radius:10px;">
+            <div style="font-size:10px; color:var(--text-sub);">HEART RATE</div>
+            <div style="font-size:22px; font-weight:800; color:#b45309;"><span class="pulsing-heart">❤️</span> <span id="vitals-page-hr">76</span> <span style="font-size:11px; color:var(--text-sub);">BPM</span></div>
+          </div>
+          <div style="background:var(--bg-app); padding:10px; border-radius:10px;">
+            <div style="font-size:10px; color:var(--text-sub);">BLOOD OXYGEN</div>
+            <div style="font-size:22px; font-weight:800; color:#1b60b8;">🫁 <span id="vitals-page-spo2">98</span>%</div>
+          </div>
+          <div style="background:var(--bg-app); padding:10px; border-radius:10px;">
+            <div style="font-size:10px; color:var(--text-sub);">BODY TEMPERATURE</div>
+            <div style="font-size:22px; font-weight:800; color:#c27803;">🌡️ <span id="vitals-page-temp">36.8</span>°C</div>
+          </div>
+          <div style="background:var(--bg-app); padding:10px; border-radius:10px;">
+            <div style="font-size:10px; color:var(--text-sub);">FALL SENSOR G-FORCE</div>
+            <div style="font-size:22px; font-weight:800; color:#1b8552;">⚡ <span id="vitals-page-gforce">1.02</span> G</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm" id="sim-tachycardia-btn" style="flex:1; padding:8px; font-size:11px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:8px; font-weight:700;">
+            Simulate High HR (132 BPM)
+          </button>
+          <button class="btn btn-sm" id="sim-normalvitals-btn" style="flex:1; padding:8px; font-size:11px; background:var(--bg-app); border:1px solid var(--border-color); border-radius:8px; font-weight:700;">
+            Reset Vitals Normal
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View 3: Medical ID Card View -->
     <div class="view-panel" id="view-medical">
       <div class="app-card">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); font-weight:700;">Medical Emergency ID</h4>
-          <span class="medical-badge badge-blood" id="med-blood-badge">Blood: --</span>
+          <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub);">Emergency Medical ID</h4>
+          <span class="badge" style="background:#eef7ff; color:#1b60b8; font-size:9px; padding:2px 8px;">Responder View</span>
         </div>
-
-        <div style="margin-bottom:12px;">
-          <div style="font-size:14px; font-weight:800;" id="med-name-display">Loading profile...</div>
-          <div style="font-size:11px; color:var(--text-sub); margin-top:2px;" id="med-sub-display">Age: --</div>
+        
+        <div class="med-item">
+          <span class="med-lbl">Patient Full Name & Age</span>
+          <span class="med-val" id="med-fullname">Senior Resident (Harsh Jain), Age 74</span>
         </div>
-
-        <div style="margin-bottom:10px;">
-          <span class="form-label">Chronic Conditions</span>
-          <div id="med-conditions-badges"></div>
+        <div class="med-item">
+          <span class="med-lbl">Blood Group</span>
+          <span class="med-val" id="med-blood" style="color:#b45309; font-size:15px;">O Positive (O+)</span>
         </div>
-
-        <div style="margin-bottom:10px;">
-          <span class="form-label">Allergies</span>
-          <div id="med-allergies-badges"></div>
+        <div class="med-item">
+          <span class="med-lbl">Known Allergies</span>
+          <span class="med-val" id="med-allergies" style="color:#d97706;">Penicillin, Sulfa drugs</span>
         </div>
-
-        <div style="margin-bottom:10px;">
-          <span class="form-label">Active Medications</span>
-          <div id="med-medications-list" style="font-size:11px; color:var(--text-sub);"></div>
+        <div class="med-item">
+          <span class="med-lbl">Pre-existing Health Conditions</span>
+          <span class="med-val" id="med-conditions">Hypertension, Mild Bradycardia, Fall Risk</span>
         </div>
-
-        <div style="margin-bottom:12px;">
-          <span class="form-label">Primary Physician & Emergency Notes</span>
-          <p style="font-size:11px; color:var(--text-sub);" id="med-notes-display"></p>
+        <div class="med-item">
+          <span class="med-lbl">Current Medications</span>
+          <span class="med-val" id="med-meds">Amlodipine 5mg, Aspirin 75mg daily</span>
         </div>
-
-        <button class="action-toggle-btn" style="width:100%;" onclick="toggleMedicalEditor()">
-          <span>✏️ Edit Medical Profile</span>
-        </button>
-
-        <!-- Medical Editor Form (Collapsible) -->
-        <form id="medical-edit-form" style="display:none; margin-top:14px; border-top:1px dashed var(--border-color); padding-top:12px;" onsubmit="saveMedicalProfile(event)">
-          <label class="form-label">Full Name</label>
-          <input type="text" id="input-med-name" class="form-input" required>
-
-          <label class="form-label">Age & Blood Group</label>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <input type="number" id="input-med-age" class="form-input" placeholder="Age" required>
-            <input type="text" id="input-med-blood" class="form-input" placeholder="Blood Group (e.g. O+)" required>
-          </div>
-
-          <label class="form-label">Chronic Conditions (comma-separated)</label>
-          <input type="text" id="input-med-conds" class="form-input" placeholder="Hypertension, Diabetes">
-
-          <label class="form-label">Allergies (comma-separated)</label>
-          <input type="text" id="input-med-allergies" class="form-input" placeholder="Penicillin, Sulfa">
-
-          <label class="form-label">Primary Physician Contact</label>
-          <input type="text" id="input-med-doctor" class="form-input" placeholder="Dr. Patel (+91...)">
-
-          <label class="form-label">Emergency Notes / Instructions</label>
-          <textarea id="input-med-notes" class="form-input" style="height:60px;"></textarea>
-
-          <div style="display:flex; gap:8px;">
-            <button type="submit" class="action-toggle-btn active" style="flex:1;">Save Medical ID</button>
-            <button type="button" class="action-toggle-btn" onclick="toggleMedicalEditor()">Cancel</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- View 3: Caregiver Contacts View -->
-    <div class="view-panel" id="view-contacts">
-      <div class="app-card">
-        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Alert Recipients</h4>
-        <div id="pwa-contacts-container">
-          <p style="font-size:12px; color:var(--text-sub); text-align:center; padding:20px;">Fetching contacts list...</p>
+        <div class="med-item">
+          <span class="med-lbl">Emergency Primary Physician</span>
+          <span class="med-val" id="med-doctor">Dr. Sarah Rao (+91 98401 23456)</span>
+        </div>
+        <div class="med-item">
+          <span class="med-lbl">Preferred Hospital / Trauma Center</span>
+          <span class="med-val" id="med-hospital">Apollo Specialty / CMC Emergency Care</span>
         </div>
       </div>
     </div>
 
-    <!-- View 4: Sensors & Diagnostics View -->
+    <!-- View 4: Diagnostics & Settings View -->
     <div class="view-panel" id="view-settings">
       <div class="app-card">
-        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Gesture & Sensor Settings</h4>
-        
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
-          <div>
-            <div style="font-size:12px; font-weight:700;">Shake-to-SOS Detection</div>
-            <div style="font-size:10px; color:var(--text-sub);">Vigorously shaking device initiates 5s emergency countdown</div>
-          </div>
-          <input type="checkbox" id="shake-toggle-check" checked onchange="toggleShakeFeature(this.checked)" style="transform:scale(1.2);">
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border-color);">
-          <div>
-            <div style="font-size:12px; font-weight:700;">Live GPS Breadcrumb Tracking</div>
-            <div style="font-size:10px; color:var(--text-sub);">Transmits movement route to caregivers every 10 seconds</div>
-          </div>
-          <span class="sys-badge ready" style="font-size:9px;">Active</span>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0;">
-          <div>
-            <div style="font-size:12px; font-weight:700;">Offline Sync Queue</div>
-            <div style="font-size:10px; color:var(--text-sub);">Queues alerts during zero-connectivity & auto-syncs when online</div>
-          </div>
-          <span class="sys-badge ready" id="offline-queue-status" style="font-size:9px;">0 Queued</span>
-        </div>
-      </div>
-
-      <div class="app-card">
-        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px; font-weight:700;">Network Diagnostics</h4>
-        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+        <h4 style="font-size:12px; text-transform:uppercase; color:var(--text-sub); margin-bottom:12px;">System Diagnostics</h4>
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:12px;">
           <span>Signal Strength</span>
           <span id="diag-signal">-- dBm</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:12px;">
           <span>Estimated Network Latency</span>
           <span id="diag-latency">-- ms</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0; border-bottom:1px dashed var(--border-color);">
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:12px;">
           <span>Server Handshake</span>
-          <span id="diag-handshake" style="color:var(--accent-red); font-weight:700;">Offline</span>
+          <span id="diag-handshake" style="color:#b45309; font-weight:700;">Offline</span>
         </div>
-        <div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 0;">
-          <span>SMS Gateway Mode</span>
-          <span id="diag-sms" style="font-weight:700;">Simulated</span>
+        <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed var(--border-color); font-size:12px;">
+          <span>Microsoft Azure ACS Gateway</span>
+          <span id="diag-azure-acs" style="color:var(--color-azure); font-weight:700;">Standby / Ready</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:8px 0; font-size:12px;">
+          <span>Safe Zone Status</span>
+          <span id="diag-safezone" style="color:#1b8552; font-weight:700;">Inside Home Perimeter</span>
         </div>
       </div>
       
       <div class="app-card" style="font-size:11px; color:var(--text-sub); line-height:1.4;">
         <b>💡 App Install Tip:</b><br>
-        To run this standalone on your mobile phone, open in Safari (iOS) and choose <b>"Add to Home Screen"</b> or Chrome (Android) and choose <b>"Install App"</b>.
+        To run standalone on your iPhone or Android, tap <b>"Add to Home Screen"</b> in browser settings. This removes browser borders for a true one-touch SOS app.
       </div>
     </div>
 
@@ -701,30 +714,35 @@
       <span class="tab-icon">🚨</span>
       <span>EMERGENCY</span>
     </div>
-    <div class="tab-item" onclick="switchView('medical', this)">
-      <span class="tab-icon">🏥</span>
-      <span>MEDICAL ID</span>
+    <div class="tab-item" onclick="switchView('vitals', this)">
+      <span class="tab-icon">🫀</span>
+      <span>VITALS</span>
     </div>
-    <div class="tab-item" onclick="switchView('contacts', this)">
-      <span class="tab-icon">👥</span>
-      <span>CONTACTS</span>
+    <div class="tab-item" onclick="switchView('medical', this)">
+      <span class="tab-icon">📋</span>
+      <span>MED ID</span>
     </div>
     <div class="tab-item" onclick="switchView('settings', this)">
       <span class="tab-icon">⚙️</span>
-      <span>SENSORS</span>
+      <span>DIAGNOSTICS</span>
     </div>
   </nav>
 
   <!-- Countdown Overlay Screen -->
   <div class="app-countdown-overlay" id="pwa-countdown-overlay">
-    <h2 style="font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px;" id="countdown-title">SOS ALERT INITIATED</h2>
+    <h2 style="font-size:18px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;" id="countdown-title">
+      SOS ALERT INITIATED
+    </h2>
+    <div style="font-size:12px; background:rgba(0,0,0,0.2); padding:4px 12px; border-radius:12px; margin-bottom:14px;" id="countdown-trigger-type">
+      Manual Push-Button Trigger
+    </div>
     <div class="num-big" id="pwa-countdown-num">5</div>
-    <p style="font-size:15px; opacity:0.9; text-align:center; max-width:300px; margin-top:14px;" id="countdown-sub">
-      Dispatching emergency distress alert and Medical ID to caregivers now.
+    <p style="font-size:13px; opacity:0.85; text-align:center; max-width:280px; margin-top:20px;">
+      Dispatching emergency distress alert with live GPS, Azure AI Triage, and voice memo.
     </p>
-    <button class="btn-stop" id="stop-sos-btn" onclick="cancelSOSCountdown()">CANCEL ALERT</button>
+    <button class="btn-stop" id="stop-sos-btn">CANCEL ALERT</button>
   </div>
 
-  <script src="js/trigger.js?v=7"></script>
+  <script src="js/trigger.js?v=6"></script>
 </body>
 </html>

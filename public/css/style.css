@@ -46,43 +46,10 @@
   --shadow-lg: 0 12px 24px rgba(0,0,0,0.08);
   
   --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Color Palette - Dark Theme */
-    --bg-primary: #131312;
-    --bg-secondary: #1a1a19;
-    --bg-tertiary: #232321;
-    
-    --text-primary: #f0eee2;
-    --text-secondary: #a8a69a;
-    --text-tertiary: #6b6a61;
-    
-    --border-primary: rgba(255, 255, 255, 0.06);
-    --border-secondary: rgba(255, 255, 255, 0.12);
-    
-    --color-danger: #ff5255;
-    --color-danger-bg: #2d1617;
-    --color-danger-border: rgba(255, 82, 85, 0.25);
-    
-    --color-success: #32d782;
-    --color-success-bg: #11261a;
-    --color-success-border: rgba(50, 215, 130, 0.25);
-    
-    --color-warning: #ffd60a;
-    --color-warning-bg: #2b2405;
-    --color-warning-border: rgba(255, 214, 10, 0.25);
-    
-    --color-info: #64b5f6;
-    --color-info-bg: #0d2238;
-    --color-info-border: rgba(100, 181, 246, 0.25);
-    
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-    --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
-    --shadow-lg: 0 16px 32px rgba(0,0,0,0.4);
-  }
-}
+/* Light Mode Enforced */
 
 body {
   font-family: var(--font-sans);
@@ -769,4 +736,302 @@ body {
 
 .leaflet-popup-tip {
   background: var(--bg-primary) !important;
+}
+
+/* ==========================================================================
+   MICROSOFT AZURE SUITE & ADVANCED SOS FEATURES STYLING
+   ========================================================================== */
+
+:root {
+  --color-azure: #0078d4;
+  --color-azure-bg: #eef7ff;
+  --color-azure-border: rgba(0, 120, 212, 0.25);
+  --color-azure-dark: #106ebe;
+  --color-triage-red: #d9383a;
+  --color-triage-orange: #d97706;
+  --color-triage-yellow: #ca8a04;
+}
+
+/* Azure Brand Badge & Pill */
+.badge-azure {
+  background: var(--color-azure-bg);
+  color: var(--color-azure);
+  border: 1px solid var(--color-azure-border);
+  font-weight: 700;
+}
+
+.btn-azure {
+  background: var(--color-azure);
+  color: #ffffff;
+  border: 1px solid var(--color-azure);
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.btn-azure:hover {
+  background: var(--color-azure-dark);
+}
+
+/* Tab Navigation for Panels */
+.subnav-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  padding: 4px;
+  border-radius: var(--border-radius-md);
+  margin-bottom: 14px;
+}
+
+.subnav-tab {
+  flex: 1;
+  text-align: center;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: var(--transition);
+}
+
+.subnav-tab.active {
+  background: var(--bg-primary);
+  color: var(--color-azure);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Azure IoT Vitals Display Widget */
+.vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.vital-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--border-radius-sm);
+  padding: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.vital-icon {
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+.vital-icon.heart-pulse {
+  animation: heart-beat 1.2s infinite ease-in-out;
+  display: inline-block;
+}
+
+@keyframes heart-beat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.25); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.25); }
+  70% { transform: scale(1); }
+}
+
+.vital-num {
+  font-size: 14px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.vital-tag {
+  font-size: 9px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+/* Emergency Voice Memo Recorder & Player */
+.voice-memo-card {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  margin: 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voice-record-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-primary);
+  padding: 10px 14px;
+  border-radius: 30px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.voice-record-btn.recording {
+  background: #ff4d4f;
+  color: white;
+  border-color: #ff4d4f;
+  animation: record-pulse 1s infinite alternate;
+}
+
+@keyframes record-pulse {
+  from { box-shadow: 0 0 4px rgba(255, 77, 79, 0.4); }
+  to { box-shadow: 0 0 16px rgba(255, 77, 79, 0.8); }
+}
+
+.audio-preview-player {
+  width: 100%;
+  height: 36px;
+  margin-top: 4px;
+}
+
+/* Azure AI Triage Card */
+.triage-card {
+  border-radius: var(--border-radius-md);
+  padding: 12px;
+  margin-top: 10px;
+  border: 1px solid transparent;
+}
+
+.triage-card.red {
+  background: rgba(217, 56, 58, 0.08);
+  border-color: rgba(217, 56, 58, 0.3);
+}
+
+.triage-card.orange {
+  background: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.triage-card.yellow {
+  background: rgba(202, 138, 4, 0.08);
+  border-color: rgba(202, 138, 4, 0.3);
+}
+
+.triage-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.triage-pill {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.triage-pill.red { background: #d9383a; color: white; }
+.triage-pill.orange { background: #d97706; color: white; }
+.triage-pill.yellow { background: #ca8a04; color: white; }
+
+.triage-actions-list {
+  font-size: 11px;
+  margin-top: 6px;
+  padding-left: 18px;
+  color: var(--text-secondary);
+}
+
+.triage-actions-list li {
+  margin-bottom: 4px;
+}
+
+/* Safe Zone Geofence Indicator */
+.safezone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 14px;
+  font-weight: 600;
+}
+
+.safezone-badge.inside {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border: 1px solid var(--color-success-border);
+}
+
+.safezone-badge.outside {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
+  animation: pulse-ring 2s infinite;
+}
+
+/* Responder Action Buttons in Alert Card */
+.responder-actions-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.responder-actions-bar .btn {
+  font-size: 10px;
+  padding: 4px 8px;
+}
+
+/* Modal Popup Dialog */
+.custom-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.custom-modal-backdrop.active {
+  display: flex;
+}
+
+.custom-modal-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--border-radius-lg);
+  max-width: 500px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-primary);
+  padding-bottom: 12px;
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-tertiary);
 }

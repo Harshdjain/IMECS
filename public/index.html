@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IMECS — SOS Emergency Communication Portal</title>
+  <meta name="color-scheme" content="light">
+  <title>IMECS — Emergency Communication Hub & Microsoft Azure Gateway</title>
   <link rel="stylesheet" href="css/style.css">
   <style>
     .qr-container {
-      margin-top: 40px;
+      margin-top: 30px;
       display: flex;
-      gap: 24px;
+      gap: 20px;
       justify-content: center;
       flex-wrap: wrap;
       width: 100%;
@@ -18,32 +19,61 @@
       background: var(--bg-secondary);
       border: 1px dashed var(--border-secondary);
       border-radius: var(--border-radius-lg);
-      padding: 24px;
+      padding: 20px;
       flex: 1;
-      min-width: 280px;
-      max-width: 380px;
+      min-width: 260px;
+      max-width: 360px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       box-shadow: var(--shadow-sm);
     }
     .qr-image {
       background: #ffffff;
-      padding: 12px;
+      padding: 10px;
       border-radius: var(--border-radius-md);
       box-shadow: var(--shadow-sm);
-      width: 174px;
-      height: 174px;
+      width: 160px;
+      height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .qr-text {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-secondary);
       line-height: 1.4;
       text-align: center;
+    }
+    .azure-feature-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 24px;
+      width: 100%;
+      max-width: 900px;
+    }
+    .azure-feature-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-primary);
+      border-radius: var(--border-radius-md);
+      padding: 14px;
+      text-align: left;
+    }
+    .azure-feature-box h4 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--color-azure);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .azure-feature-box p {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.4;
     }
   </style>
 </head>
@@ -52,28 +82,32 @@
     <div class="brand-section">
       <div class="status-dot"></div>
       <div>
-        <h1>IMECS Hub</h1>
-        <p>Intelligent Emergency Portal</p>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h1>IMECS Hub</h1>
+          <span class="badge badge-azure">☁️ Microsoft Azure Integrated</span>
+        </div>
+        <p>Intelligent Multi-Layer Emergency Portal</p>
       </div>
     </div>
-    <span class="badge badge-success">System Online</span>
+    <span class="badge badge-success">System Online (Port 3000)</span>
   </header>
 
-  <main class="hub-container" style="margin-top: 40px; margin-bottom: 40px;">
-    <h2 class="hub-title">Emergency Communication Hub</h2>
+  <main class="hub-container" style="margin-top: 30px; margin-bottom: 40px;">
+    <h2 class="hub-title">Emergency Communication & Multi-Cloud Hub</h2>
     <p class="hub-subtitle">
-      Welcome to the Intelligent Multi-Layer Emergency Communication System (IMECS).
-      Connect your mobile device and monitor alerts in real time.
+      Hybrid emergency response system powered by <b>Microsoft Azure</b>, Twilio, and LoRa Mesh.
+      Featuring automatic fall detection, voice distress memos, live Azure IoT vitals, and AI clinical triage.
     </p>
 
+    <!-- Main Entry Cards -->
     <div class="hub-cards">
       <!-- Elderly Trigger View -->
       <a href="trigger.html" class="hub-card">
         <div class="hub-card-icon">🚨</div>
         <h3 class="hub-card-title">Elderly SOS Trigger App</h3>
         <p class="hub-card-desc">
-          Simplified mobile-first interface optimized for elderly users.
-          Features a single-touch distress trigger, automatic GPS tracking, and real-time network path selection.
+          Distraction-free PWA with single-touch SOS, automatic accelerometer fall detection,
+          5-sec emergency countdown, distress voice memo recorder, and live vitals telemetry.
         </p>
         <span class="btn-arrow">Open Trigger App &rarr;</span>
       </a>
@@ -81,52 +115,70 @@
       <!-- Caregiver Dashboard View -->
       <a href="dashboard.html" class="hub-card">
         <div class="hub-card-icon">🛡️</div>
-        <h3 class="hub-card-title">Caregiver & Responder Dashboard</h3>
+        <h3 class="hub-card-title">Caregiver & Azure Command Hub</h3>
         <p class="hub-card-desc">
-          Central monitoring panel. View incoming distress locations on a live map,
-          manage emergency contact numbers, review decision logs, and configure SMS gateways.
+          Real-time Leaflet map with safe zone geofencing, hospital directions,
+          Azure AI clinical triage assessment, voice memo playback, and multi-cloud SMS gateway settings.
         </p>
-        <span class="btn-arrow">Open Dashboard &rarr;</span>
+        <span class="btn-arrow">Open Command Hub &rarr;</span>
       </a>
+    </div>
+
+    <!-- Microsoft Azure Feature Highlights Grid -->
+    <div class="azure-feature-strip">
+      <div class="azure-feature-box">
+        <h4><span>☁️</span> Azure Communication Services</h4>
+        <p>Direct enterprise SMS and voice alert dispatch, with seamless multi-cloud failover to Twilio and in-app channels.</p>
+      </div>
+      <div class="azure-feature-box">
+        <h4><span>🫀</span> Azure IoT Hub Device Twin</h4>
+        <p>Streams real-time wearable telemetry: Heart Rate (BPM), Blood Oxygen (SpO2), Skin Temperature, and impact G-force.</p>
+      </div>
+      <div class="azure-feature-box">
+        <h4><span>🤖</span> Azure AI Clinical Triage</h4>
+        <p>Instant clinical severity scoring (Red / Orange / Yellow), first-responder action plans, and hospital prep notes.</p>
+      </div>
+      <div class="azure-feature-box">
+        <h4><span>🗄️</span> Azure Blob Storage Archival</h4>
+        <p>Automated cloud archival of incident JSON logs, GPS coordinates, and distress voice audio recordings.</p>
+      </div>
+      <div class="azure-feature-box">
+        <h4><span>⚠️</span> Automatic Fall Detection</h4>
+        <p>Hardware 3D motion accelerometer triggers an automatic 10-second cancel window before dispatching SOS.</p>
+      </div>
+      <div class="azure-feature-box">
+        <h4><span>🎙️</span> Distress Voice Memos</h4>
+        <p>Record a 5-second voice distress message directly in the PWA, playable immediately by responders on the dashboard.</p>
+      </div>
     </div>
 
     <!-- QR Code Mobile Link Section -->
     <div class="qr-container">
       <!-- iOS Setup Card -->
       <div class="qr-card">
-        <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px;">🍏 Link Apple iPhone</h3>
+        <h3 style="font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px;">🍏 Apple iPhone Link</h3>
         <div class="qr-image">
-          <img id="qr-code-ios" src="" alt="Loading iPhone QR Code..." style="width: 150px; height: 150px; display: block;">
+          <img id="qr-code-ios" src="" alt="Loading iPhone QR Code..." style="width: 140px; height: 140px; display: block;">
         </div>
         <p class="qr-text">
-          Scan with your iPhone (Safari). Provides visual prompts to save this app directly to your Apple home screen.
+          Scan with iPhone camera. Open in Safari and tap "Add to Home Screen" to install standalone SOS app.
         </p>
       </div>
 
       <!-- Android Setup Card -->
       <div class="qr-card">
-        <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:6px;">🤖 Link Android Phone</h3>
+        <h3 style="font-size:14px; font-weight:700; display:flex; align-items:center; gap:6px;">🤖 Android Phone Link</h3>
         <div class="qr-image">
-          <img id="qr-code-android" src="" alt="Loading Android QR Code..." style="width: 150px; height: 150px; display: block;">
+          <img id="qr-code-android" src="" alt="Loading Android QR Code..." style="width: 140px; height: 140px; display: block;">
         </div>
         <p class="qr-text">
-          Scan with your Android phone (Chrome). Automatically opens the Chrome native PWA installer prompt.
+          Scan with Android camera. Opens Chrome with native PWA installer prompt for instant home screen install.
         </p>
-        </div>
-
-    <!-- Desktop Laptop Setup Section -->
-    <div class="qr-card" style="max-width: 784px; width: 100%; margin-top: 24px; text-align: left; align-items: flex-start; padding: 20px 24px;">
-      <h3 style="font-size:15px; font-weight:700; display:flex; align-items:center; gap:8px;">💻 Access on Windows & Mac Laptops</h3>
-      <p class="qr-text" style="text-align: left; font-size:12px;">
-        The SOS Trigger and Caregiver Dashboard are fully optimized for PCs and Laptops running <b>Windows</b> or <b>macOS (Apple Mac)</b>:
-      </p>
-      <ul style="font-size: 12px; color: var(--text-secondary); margin-left: 20px; line-height: 1.6;">
-        <li><b>Windows (Chrome/Edge)</b>: Click the <b>"Install App"</b> icon (looks like a monitor with a down arrow) at the right end of the browser address bar to install it as a native desktop application.</li>
-        <li><b>macOS (Safari)</b>: Click the browser <b>File</b> menu and select <b>"Add to Dock"</b> to turn the app into a standalone Mac dock icon.</li>
-      </ul>
+      </div>
     </div>
 
-    <div style="font-size:11px; font-family:monospace; background:var(--bg-secondary); padding:8px 16px; border-radius:6px; margin-top:24px; display:inline-block; border:1px solid var(--border-primary);" id="network-ip-display">
+    <!-- Network IP Display -->
+    <div style="font-size:11px; font-family:monospace; background:var(--bg-secondary); padding:8px 16px; border-radius:6px; margin-top:20px; display:inline-block; border:1px solid var(--border-primary);" id="network-ip-display">
       Detecting local IP address...
     </div>
   </main>
@@ -137,17 +189,16 @@
         const res = await fetch('/api/system-info');
         if (res.ok) {
           const data = await res.json();
-          
           const iosUrl = `http://${data.localIp}:${data.port}/trigger.html?platform=ios`;
           const androidUrl = `http://${data.localIp}:${data.port}/trigger.html?platform=android`;
           
-          // Generate iOS & Android specific QR codes
-          document.getElementById('qr-code-ios').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(iosUrl)}`;
-          document.getElementById('qr-code-android').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(androidUrl)}`;
+          document.getElementById('qr-code-ios').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(iosUrl)}`;
+          document.getElementById('qr-code-android').src = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(androidUrl)}`;
           
           document.getElementById('network-ip-display').innerHTML = `
             Local Server IP: <b>${data.localIp}</b> | Port: <b>${data.port}</b><br>
-            Direct Trigger Link: <a href="http://${data.localIp}:${data.port}/trigger.html" target="_blank" style="color:var(--color-info); text-decoration:underline;">http://${data.localIp}:${data.port}/trigger.html</a>
+            Direct Mobile Trigger: <a href="http://${data.localIp}:${data.port}/trigger.html" target="_blank" style="color:var(--color-info); text-decoration:underline;">http://${data.localIp}:${data.port}/trigger.html</a> | 
+            Command Dashboard: <a href="http://${data.localIp}:${data.port}/dashboard.html" target="_blank" style="color:var(--color-info); text-decoration:underline;">http://${data.localIp}:${data.port}/dashboard.html</a>
           `;
         }
       } catch (error) {

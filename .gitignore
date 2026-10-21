@@ -6,7 +6,3 @@ node_modules/
 
 # Diagnostic / Active Log files
 data/alerts.json
-
-# Archives
-*.zip
-
