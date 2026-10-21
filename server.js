@@ -402,6 +402,7 @@ app.get('/api/system-info', (req, res) => {
   const hasAzureIot = !!process.env.AZURE_IOT_HUB_CONNECTION_STRING;
 
   res.json({
+    version: '2.0.0',
     localIp: getLocalIp(),
     port: PORT,
     gatewayProvider: process.env.GATEWAY_PROVIDER || 'simulated',
